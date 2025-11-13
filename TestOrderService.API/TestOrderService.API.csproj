@@ -9,29 +9,30 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AutoMapper" Version="14.0.0" />
-        <PackageReference Include="FluentValidation" Version="12.1.0" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
+        <PackageReference Include="AutoMapper" Version="15.1.0"/>
+        <PackageReference Include="FluentValidation" Version="12.1.0"/>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.10">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.10" />
-        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
-        <PackageReference Include="Scalar.AspNetCore" Version="2.10.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.10"/>
+        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1"/>
+        <PackageReference Include="Scalar.AspNetCore" Version="2.10.3"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
+        <Content Include="..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\TestOrderService.Application\TestOrderService.Application.csproj" />
-      <ProjectReference Include="..\TestOrderService.Domain\TestOrderService.Domain.csproj" />
-      <ProjectReference Include="..\TestOrderService.Infrastructure\TestOrderService.Infrastructure.csproj" />
+        <ProjectReference Include="..\TestOrderService.Application\TestOrderService.Application.csproj"/>
+        <ProjectReference Include="..\TestOrderService.Domain\TestOrderService.Domain.csproj"/>
+        <ProjectReference Include="..\TestOrderService.Infrastructure\TestOrderService.Infrastructure.csproj"/>
     </ItemGroup>
 
 </Project>
