@@ -1,15 +1,16 @@
-﻿namespace TestOrderService.API.Test;
-
-public class Tests
+﻿namespace TestOrderService.API.Test
 {
-    [SetUp]
-    public void Setup()
+    public class Tests
     {
-    }
+        [SetUp]
+        public void Setup()
+        {
+        }
 
-    [Test]
-    public void Test1()
-    {
-        Assert.Pass();
+        [Test]
+        public void Test1()
+        {
+            Assert.Pass();
+        }
     }
 }
