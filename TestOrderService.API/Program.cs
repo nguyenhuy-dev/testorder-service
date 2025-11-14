@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using TestOrderService.API.Converters;
+using TestOrderService.API.gRPC.Services;
 using TestOrderService.API.Middleware;
 using TestOrderService.Application;
 using TestOrderService.Application.Behaviors;
@@ -37,6 +38,8 @@ builder.Services.AddMediatR(cfg =>
 );
 builder.Services.AddValidatorsFromAssembly(applicationAssembly);
 
+builder.Services.AddGrpc();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -53,6 +56,8 @@ app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseHttpsRedirection();
 
 app.MapControllers();
+
+app.MapGrpcService<TestOrderGrpcService>();
 
 await app.MigrateDbContextAsync<TestOrderServiceDbContext>();
 

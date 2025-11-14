@@ -3,13 +3,13 @@ using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.Message;
 using Entities=TestOrderService.Domain.Entities;
 
-namespace TestOrderService.Application.Features.TestOrder.Commands.CreateTestOrder
+namespace TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder
 {
     /// <summary>
     ///     Command handler for create test order implement.
     /// </summary>
     /// <seealso
-    ///     cref="TestOrderService.Application.Interfaces.Message.ICommandHandler&lt;TestOrderService.Application.Features.TestOrder.Commands.CreateTestOrder.CreateTestOrderCommand, TestOrderService.Domain.Entities.TestOrder&gt;" />
+    ///     cref="ICommandHandler{CreateTestOrderCommand,Entities}.TestOrder&gt;" />
     public class CreateTestOrderCommandHandler(
         ITestOrderRepository testOrderRepository,
         IUnitOfWork unitOfWork) : ICommandHandler<CreateTestOrderCommand, Entities.TestOrder>

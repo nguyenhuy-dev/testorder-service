@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
-namespace TestOrderService.Application.Features.TestOrder.Commands.CreateTestOrder
+namespace TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder
 {
     /// <summary>
     ///     Validator supports create test order command.
     /// </summary>
     /// <seealso
-    ///     cref="FluentValidation.AbstractValidator&lt;TestOrderService.Application.Features.TestOrder.Commands.CreateTestOrder.CreateTestOrderCommand&gt;" />
+    ///     cref="AbstractValidator&lt;CreateTestOrderCommand&gt;" />
     public class CreateTestOrderCommandValidator : AbstractValidator<CreateTestOrderCommand>
     {
         /// <summary>

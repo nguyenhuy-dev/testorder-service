@@ -5,7 +5,7 @@ using System.Security.Claims;
 using TestOrderService.API.Commons;
 using TestOrderService.API.Middleware;
 using TestOrderService.Application.DTOs;
-using TestOrderService.Application.Features.TestOrder.Commands.CreateTestOrder;
+using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Controllers
 {

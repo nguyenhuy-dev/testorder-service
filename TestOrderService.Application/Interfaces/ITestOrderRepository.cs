@@ -13,5 +13,7 @@ namespace TestOrderService.Application.Interfaces
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         Task<TestOrder> CreateTestOrderAsync(TestOrder testOrder, CancellationToken cancellationToken);
+
+        Task<IEnumerable<TestOrder>> GetAllTestOrdersAsync(CancellationToken cancellationToken);
     }
 }

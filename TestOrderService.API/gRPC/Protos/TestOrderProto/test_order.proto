@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+option csharp_namespace = "TestOrderService.API.gRPC.Protos";
+
+package test_order;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+service TestOrder {
+    rpc GetAllTestOrders (Empty) returns (TestOrderListResponse);
+}
+
+message Empty {}
+
+message TestOrderListResponse {
+    repeated TestOrderEntity TestOrders = 1;
+}
+
+message TestOrderEntity {
+    string TestOrderId = 1;
+    string PatientId = 2;
+    int32 Status = 3;
+    google.protobuf.StringValue ReviewId = 4;
+    google.protobuf.Timestamp ReviewAt = 5;
+    string CreateById = 6;
+    google.protobuf.Timestamp CreateAt = 7;
+    string RunById = 8;
+    google.protobuf.Timestamp RunAt = 9;
+    google.protobuf.StringValue UpdateById = 10;
+    google.protobuf.Timestamp UpdateAt = 11;
+    google.protobuf.StringValue TestOrderDescription = 12;
+}
