@@ -1,13 +1,13 @@
 ﻿using TestOrderService.Application.Interfaces.Message;
 using TestOrderService.Domain.Entities;
-namespace TestOrderService.Application.Features.TestOrder.Commands.CreateTestOrder
+namespace TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder
 {
     /// <summary>
     ///     Create test order command.
     /// </summary>
     /// <seealso
-    ///     cref="TestOrderService.Application.Interfaces.Message.ICommand&lt;TestOrderService.Domain.Entities.TestOrder&gt;" />
-    public class CreateTestOrderCommand : ICommand<Domain.Entities.TestOrder>
+    ///     cref="ICommand{Domain}.Entities.TestOrder&gt;" />
+    public class CreateTestOrderCommand : ICommand<TestOrder>
     {
         /// <summary>
         ///     Gets or sets the test order identifier.

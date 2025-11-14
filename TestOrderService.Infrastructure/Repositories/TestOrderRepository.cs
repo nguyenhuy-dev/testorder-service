@@ -1,4 +1,5 @@
-﻿using TestOrderService.Application.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using TestOrderService.Application.Interfaces;
 using TestOrderService.Domain.Entities;
 using TestOrderService.Infrastructure.Data;
 namespace TestOrderService.Infrastructure.Repositories
@@ -25,6 +26,11 @@ namespace TestOrderService.Infrastructure.Repositories
             await _dbContext.AddAsync(testOrder, cancellationToken);
 
             return testOrder;
+        }
+
+        public async Task<IEnumerable<TestOrder>> GetAllTestOrdersAsync(CancellationToken cancellationToken)
+        {
+            return await _dbContext.TestOrders.ToArrayAsync(cancellationToken);
         }
     }
 }
