@@ -1,4 +1,4 @@
-﻿using TestOrderService.Domain.Entities;
+using TestOrderService.Domain.Entities;
 namespace TestOrderService.Application.Interfaces
 {
     /// <summary>
@@ -14,6 +14,25 @@ namespace TestOrderService.Application.Interfaces
         /// <returns></returns>
         Task<TestOrder> CreateTestOrderAsync(TestOrder testOrder, CancellationToken cancellationToken);
 
+        /// <summary>
+        ///     Gets the all test orders using the specified cancellation token
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns>A task containing an enumerable of test order</returns>
         Task<IEnumerable<TestOrder>> GetAllTestOrdersAsync(CancellationToken cancellationToken);
+
+        /// <summary>
+        ///     Gets the by id using the specified id
+        /// </summary>
+        /// <param name="id">The id</param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns>A task containing the test order</returns>
+        Task<TestOrder?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        ///     Deletes the test order
+        /// </summary>
+        /// <param name="testOrder">The test order</param>
+        void Delete(TestOrder testOrder);
     }
 }

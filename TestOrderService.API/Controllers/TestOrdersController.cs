@@ -1,10 +1,11 @@
-﻿using Mapster;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TestOrderService.API.Commons;
 using TestOrderService.API.Middleware;
 using TestOrderService.Application.DTOs;
+using TestOrderService.Application.Features.TestOrders.Commands;
 using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Controllers
@@ -44,6 +45,37 @@ namespace TestOrderService.API.Controllers
             var testOrder = await _sender.Send(testOrderCommand, cancellationToken);
 
             return StatusCode(StatusCodes.Status201Created, testOrder);
+        }
+
+        /// <summary>
+        ///     Deletes the test order using the specified id
+        /// </summary>
+        /// <param name="id">The id</param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns>A task containing the action result</returns>
+        [HttpDelete("{id:guid}"), ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> DeleteTestOrder(Guid id, CancellationToken cancellationToken = default)
+        {
+            var command = new DeleteTestOrderCommand(id);
+            var result = await _sender.Send(command, cancellationToken);
+
+            if (!result)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    StatusCode = 400,
+                    Message = "Cannot delete this TestOrder. Only Completed TestOrders can be deleted."
+                });
+            }
+
+            var response = new ApiResponse<object>
+            {
+                StatusCode = 200,
+                Message = "Delete TestOrder successfully.",
+                Data = new { TestOrderId = id, Deleted = result }
+            };
+
+            return Ok(response);
         }
     }
 }

@@ -101,6 +101,9 @@ namespace TestOrderService.API.Middleware
                     _logger.LogWarning(badRequestException, "Having bad request.");
                     break;
 
+                case BusinessRuleException businessRuleException:
+                    _logger.LogWarning(businessRuleException, "Business rule violation.");
+                    break;
                 default:
                     _logger.LogError(ex, "Unhandled exception: {ExceptionType} - {Message}.", ex.GetType().Name, ex.Message);
                     break;
@@ -154,7 +157,9 @@ namespace TestOrderService.API.Middleware
                 ValidationException => StatusCodes.Status400BadRequest,
                 BadRequestException => StatusCodes.Status400BadRequest,
                 UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+                BusinessRuleException => StatusCodes.Status400BadRequest,
                 _ => StatusCodes.Status500InternalServerError
+
             };
         }
     }
