@@ -39,6 +39,15 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddValidatorsFromAssembly(applicationAssembly);
 
 builder.Services.AddGrpc();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
+});
+
 
 var app = builder.Build();
 
@@ -47,7 +56,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
+app.UseCors("AllowFrontend");
 app.MapGet("/", () => Results.Ok("Welcome to Test Order Service")).AllowAnonymous();
 app.MapScalarApiReference().AllowAnonymous();
 
