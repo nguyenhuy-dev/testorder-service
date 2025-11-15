@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Domain.Entities;
 using TestOrderService.Infrastructure.Data;
@@ -28,9 +28,33 @@ namespace TestOrderService.Infrastructure.Repositories
             return testOrder;
         }
 
+        /// <summary>
+        ///     Gets the all test orders using the specified cancellation token
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns>A task containing an enumerable of test order</returns>
         public async Task<IEnumerable<TestOrder>> GetAllTestOrdersAsync(CancellationToken cancellationToken)
         {
             return await _dbContext.TestOrders.ToArrayAsync(cancellationToken);
+        }
+        /// <summary>
+        ///     Gets the by id using the specified id
+        /// </summary>
+        /// <param name="id">The id</param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns>A task containing the test order</returns>
+        public async Task<TestOrder?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.TestOrders
+                .FirstOrDefaultAsync(t => t.TestOrderId == id, cancellationToken);
+        }
+
+        /// <summary>
+        ///     Delete TestOrder (hard delete).
+        /// </summary>
+        public void Delete(TestOrder entity)
+        {
+            _dbContext.TestOrders.Remove(entity);
         }
     }
 }
