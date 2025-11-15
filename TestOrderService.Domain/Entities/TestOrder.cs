@@ -23,7 +23,7 @@ namespace TestOrderService.Domain.Entities
         // Doctor
         public Guid RunById { get; set; }
 
-        public DateTime RunAt { get; set; }
+        public DateTime? RunAt { get; set; }
 
         public Guid? UpdateById { get; set; }
 
