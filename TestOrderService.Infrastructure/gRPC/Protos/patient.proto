@@ -1,0 +1,33 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "Patient_TestOrder_Service.API.gRPC.Protos.PatientProto";
+
+package patient;
+
+// Service definition
+service PatientService {
+    rpc GetAllPatients (GetAllPatientsRequest) returns (GetAllPatientsResponse);
+}
+
+// Request message
+message GetAllPatientsRequest {
+}
+
+// Response message
+message GetAllPatientsResponse {
+    repeated PatientMessage patients = 1;
+}
+
+// Patient message
+message PatientMessage {
+    string patient_id = 1; // Guid as string
+    string patient_name = 2;
+    string identity_number = 3; // nullable
+    bool gender = 4;
+    string date_of_birth = 5; // Format: yyyy-MM-dd (DateOnly)
+    string phone_number = 6;
+    string email = 7; // nullable
+    string address = 8;
+    bool is_active = 9;
+    string user_id = 10; // Guid as string, nullable (empty string means null)
+}

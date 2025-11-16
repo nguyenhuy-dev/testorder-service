@@ -1,3 +1,4 @@
+using TestOrderService.Application.DTOs;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.Application.Interfaces
 {
@@ -13,12 +14,11 @@ namespace TestOrderService.Application.Interfaces
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         Task<TestOrder> CreateTestOrderAsync(TestOrder testOrder, CancellationToken cancellationToken);
-
         /// <summary>
-        ///     Gets the all test orders using the specified cancellation token
+        ///     Gets all test orders asynchronous.
         /// </summary>
-        /// <param name="cancellationToken">The cancellation token</param>
-        /// <returns>A task containing an enumerable of test order</returns>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
         Task<IEnumerable<TestOrder>> GetAllTestOrdersAsync(CancellationToken cancellationToken);
 
         /// <summary>
@@ -34,5 +34,12 @@ namespace TestOrderService.Application.Interfaces
         /// </summary>
         /// <param name="testOrder">The test order</param>
         void Delete(TestOrder testOrder);
+        /// <summary>
+        ///     Gets the test orders asynchronous.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        Task<PaginatedList<TestOrderDto>> GetTestOrdersAsync(GetTestOrdersRequest request, CancellationToken cancellationToken = default);
     }
 }
