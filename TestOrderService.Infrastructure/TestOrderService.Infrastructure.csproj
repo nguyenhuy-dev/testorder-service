@@ -12,6 +12,12 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Google.Protobuf" Version="3.33.1"/>
+        <PackageReference Include="Grpc.Net.Client" Version="2.76.0-pre1"/>
+        <PackageReference Include="Grpc.Tools" Version="2.76.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11">
@@ -29,4 +35,8 @@
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <Protobuf Include="gRPC\Protos\patient.proto" GrpcServices="Client"/>
+        <Protobuf Include="gRPC\Protos\user.proto" GrpcServices="Client"/>
+    </ItemGroup>
 </Project>

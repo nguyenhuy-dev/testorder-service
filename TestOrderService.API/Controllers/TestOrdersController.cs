@@ -7,6 +7,7 @@ using TestOrderService.API.Middleware;
 using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Features.TestOrders.Commands;
 using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
+using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Controllers
 {
@@ -76,6 +77,20 @@ namespace TestOrderService.API.Controllers
             };
 
             return Ok(response);
+        }
+        /// <summary>
+        ///     Gets the test orders.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        [HttpGet, ProducesResponseType(typeof(ApiResponse<PaginatedList<TestOrderDto>>), StatusCodes.Status200OK), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetTestOrders([FromQuery] GetTestOrdersRequest request, CancellationToken cancellationToken = default)
+        {
+            var query = new GetTestOrdersQuery(request);
+            var result = await _sender.Send(query, cancellationToken);
+
+            return Ok(ApiResponse<PaginatedList<TestOrderDto>>.Success(result));
         }
     }
 }

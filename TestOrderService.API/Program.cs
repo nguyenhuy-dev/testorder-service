@@ -1,6 +1,9 @@
 using FluentValidation;
+using Grpc.Net.Client;
+using IAMService.API.gRPC.Protos.UserProto;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Patient_TestOrder_Service.API.gRPC.Protos.PatientProto;
 using Scalar.AspNetCore;
 using TestOrderService.API.Converters;
 using TestOrderService.API.gRPC.Services;
@@ -8,7 +11,9 @@ using TestOrderService.API.Middleware;
 using TestOrderService.Application;
 using TestOrderService.Application.Behaviors;
 using TestOrderService.Application.Interfaces;
+using TestOrderService.Application.Interfaces.gRPC;
 using TestOrderService.Infrastructure.Data;
+using TestOrderService.Infrastructure.gRPC.Clients;
 using TestOrderService.Infrastructure.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +42,25 @@ builder.Services.AddMediatR(cfg =>
     }
 );
 builder.Services.AddValidatorsFromAssembly(applicationAssembly);
+
+// Register Patient gRPC client
+builder.Services.AddSingleton(provider =>
+{
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    var grpcAddress = configuration["PATIENT_GRPC_URL"] ?? "http://localhost:5249";
+    var channel = GrpcChannel.ForAddress(grpcAddress);
+    return new PatientService.PatientServiceClient(channel);
+});
+builder.Services.AddScoped<IPatientGrpcClient, PatientGrpcClient>();
+
+builder.Services.AddSingleton(provider =>
+{
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    var grpcAddress = configuration["IAM_GRPC_URL"] ?? "http://localhost:5095";
+    var channel = GrpcChannel.ForAddress(grpcAddress);
+    return new UserService.UserServiceClient(channel);
+});
+builder.Services.AddScoped<IUserGrpcClient, UserGrpcClient>();
 
 builder.Services.AddGrpc();
 builder.Services.AddCors(options =>
