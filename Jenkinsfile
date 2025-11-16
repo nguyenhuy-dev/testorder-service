@@ -46,8 +46,7 @@ pipeline {
         // Only collect coverage for these projects (exclude test projects and other assemblies)
         COVERAGE_INCLUDE = '[TestOrderService.Application]*,[TestOrderService.API]*'
         // Example: Exclude only from specific project
-		COVERAGE_EXCLUDE = '[*.Test]*,[*]*.Program,[*]*Program*,[*]*.Startup,[*]*ErrorDetail,[*]*ErrorResponse,[*]*ValidationBehavior*,[*.Application]*.DTOs.*,[*.Application.DTOs]*'
-        
+		COVERAGE_EXCLUDE = '[*.Test]*,[*]*.Program,[*]*Program*,[*]*.Startup,[*]*ErrorDetail,[*]*ErrorResponse,[*]*ValidationBehavior*,[*.Application]*.DTOs.*,[*.Application.DTOs]*,[*]*.gRPC.Protos.*,[*]*Grpc*'
         
         // --- BUILD CONFIGURATION ---
         BUILD_CONFIGURATION   = 'Release'
