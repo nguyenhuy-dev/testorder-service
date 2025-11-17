@@ -5,6 +5,8 @@ using Moq;
 using TestOrderService.API.Commons;
 using TestOrderService.API.Controllers;
 using TestOrderService.Application.DTOs;
+using TestOrderService.Application.Exceptions;
+using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Test.Controllers
@@ -372,6 +374,96 @@ namespace TestOrderService.API.Test.Controllers
                 Assert.That(firstOrder.CreateByName, Is.EqualTo("Dr. Alice"));
                 Assert.That(firstOrder.RunByName, Is.EqualTo("Dr. Bob"));
             });
+        }
+
+        [Test]
+        public async Task GetTestOrderDetail_ShouldReturnOk_WhenQuerySuccessful()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var detail = new TestOrderDetailDto
+            {
+                TestOrderId = id,
+                PatientId = Guid.NewGuid(),
+                PatientName = "Test Patient",
+                Status = "Pending",
+                CreatedBy = "Doctor A"
+            };
+
+            _mockSender.Setup(s =>
+                    s.Send(It.IsAny<GetTestOrderDetailQuery>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(detail);
+
+            // Act
+            var actionResult = await _controller.GetTestOrderDetail(id, CancellationToken.None);
+
+            // Assert
+            var okResult = actionResult as OkObjectResult;
+            Assert.That(okResult, Is.Not.Null);
+            Assert.That(okResult!.StatusCode, Is.EqualTo(200));
+
+            var apiResponse = okResult.Value as ApiResponse<TestOrderDetailDto>;
+            Assert.That(apiResponse!.Data.TestOrderId, Is.EqualTo(id));
+        }
+
+
+
+        [Test]
+        public void GetTestOrderDetail_ShouldThrowNotFound_WhenHandlerThrowsNotFound()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var expected = new NotFoundException("TestOrder not found");
+
+            _mockSender
+                .Setup(s => s.Send(It.IsAny<GetTestOrderDetailQuery>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(expected);
+
+            // Act
+            var ex = Assert.ThrowsAsync<NotFoundException>(() => _controller.GetTestOrderDetail(id, CancellationToken.None));
+
+            // Assert
+            Assert.That(ex!.Message, Is.EqualTo("TestOrder not found"));
+        }
+
+
+
+        [Test]
+        public void GetTestOrderDetail_ShouldThrowForbidden_WhenHandlerThrowsForbidden()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var expected = new ForbiddenAccessException("Forbidden access");
+
+            _mockSender
+                .Setup(s => s.Send(It.IsAny<GetTestOrderDetailQuery>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(expected);
+
+            // Act
+            var ex = Assert.ThrowsAsync<ForbiddenAccessException>(() => _controller.GetTestOrderDetail(id, CancellationToken.None));
+
+            // Assert
+            Assert.That(ex!.Message, Is.EqualTo("Forbidden access"));
+        }
+
+
+
+        [Test]
+        public void GetTestOrderDetail_ShouldThrowInternalServerError_WhenUnexpectedExceptionOccurs()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var expected = new Exception("Unexpected error");
+
+            _mockSender
+                .Setup(s => s.Send(It.IsAny<GetTestOrderDetailQuery>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(expected);
+
+            // Act
+            var ex = Assert.ThrowsAsync<Exception>(() => _controller.GetTestOrderDetail(id, CancellationToken.None));
+
+            // Assert
+            Assert.That(ex!.Message, Is.EqualTo("Unexpected error"));
         }
     }
 }
