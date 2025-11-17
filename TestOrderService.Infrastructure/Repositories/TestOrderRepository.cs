@@ -116,6 +116,7 @@ namespace TestOrderService.Infrastructure.Repositories
                         PatientId = t.PatientId,
                         FullName = patient.PatientName,
                         Age = age,
+                        DateOfBirth = patient.DateOfBirth,
                         Phone = patient.PhoneNumber,
                         Gender = patient.Gender,
                         Status = t.Status.ToString(),

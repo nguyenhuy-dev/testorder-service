@@ -38,6 +38,14 @@
         public int Age { get; set; }
 
         /// <summary>
+        ///     Gets or sets the date of birth of the patient.
+        /// </summary>
+        /// <value>
+        ///     The date of birth.
+        /// </value>
+        public DateOnly? DateOfBirth { get; set; }
+
+        /// <summary>
         ///     Gets or sets the phone number of the patient.
         /// </summary>
         /// <value>
