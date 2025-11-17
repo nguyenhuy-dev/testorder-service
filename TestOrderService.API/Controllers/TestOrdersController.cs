@@ -7,6 +7,7 @@ using TestOrderService.API.Middleware;
 using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Features.TestOrders.Commands;
 using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
+using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Controllers
@@ -91,6 +92,21 @@ namespace TestOrderService.API.Controllers
             var result = await _sender.Send(query, cancellationToken);
 
             return Ok(ApiResponse<PaginatedList<TestOrderDto>>.Success(result));
+        }
+
+        /// <summary>
+        ///     Gets the test order detail using the specified id
+        /// </summary>
+        /// <param name="id">The id</param>
+        /// <param name="ct">The ct</param>
+        /// <returns>A task containing the action result</returns>
+        [HttpGet("{id:guid}/detail"), ProducesResponseType(typeof(ApiResponse<TestOrderDetailDto>), StatusCodes.Status200OK), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetTestOrderDetail(Guid id, CancellationToken ct)
+        {
+            var query = new GetTestOrderDetailQuery(id);
+            var result = await _sender.Send(query, ct);
+
+            return Ok(ApiResponse<TestOrderDetailDto>.Success(result));
         }
     }
 }
