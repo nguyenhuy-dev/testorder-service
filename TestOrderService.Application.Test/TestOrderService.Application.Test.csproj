@@ -26,6 +26,12 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\TestOrderService.Application\TestOrderService.Application.csproj"/>
+        <ProjectReference Include="..\TestOrderService.Domain\TestOrderService.Domain.csproj"/>
+        <ProjectReference Include="..\TestOrderService.Infrastructure\TestOrderService.Infrastructure.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 

@@ -13,7 +13,14 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.CreateTestOr
         /// </summary>
         public CreateTestOrderCommandValidator()
         {
+            RuleFor(x => x.PatientId)
+                .NotEmpty();
+
             RuleFor(x => x.RunById)
+                .NotEmpty();
+
+            RuleFor(x => x.RunAt)
+                .GreaterThan(DateTime.UtcNow)
                 .NotEmpty();
         }
     }

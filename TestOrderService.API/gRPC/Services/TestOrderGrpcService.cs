@@ -1,9 +1,11 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Mapster;
 using MediatR;
 using TestOrderService.API.gRPC.Protos;
 using TestOrderService.Application.Features.TestOrders.Queries.GetAllTestOrders;
 using Empty=TestOrderService.API.gRPC.Protos.Empty;
+
 namespace TestOrderService.API.gRPC.Services
 {
     public class TestOrderGrpcService(ISender sender) : TestOrder.TestOrderBase
@@ -16,6 +18,7 @@ namespace TestOrderService.API.gRPC.Services
             var testOrders = await _sender.Send(query);
 
             var response = new TestOrderListResponse();
+            response.TestOrders.AddRange(testOrders.Select(t => t.Adapt<TestOrderEntity>()));
 
             foreach (var testOrder in testOrders)
             {

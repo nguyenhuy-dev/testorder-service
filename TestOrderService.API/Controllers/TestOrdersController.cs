@@ -39,8 +39,8 @@ namespace TestOrderService.API.Controllers
 
             var createById = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(createById, out var createByIdGuid))
-                //throw new InvalidOperationException($"Can't parse '{nameof(createById)}' to Guid: {createById}.");
-                testOrderCommand.CreateById = createByIdGuid;
+                throw new InvalidOperationException($"Can't parse '{nameof(createById)}' to Guid: {createById}.");
+            testOrderCommand.CreateById = createByIdGuid;
 
             testOrderCommand.PatientId = patientId;
 
@@ -79,6 +79,7 @@ namespace TestOrderService.API.Controllers
 
             return Ok(response);
         }
+
         /// <summary>
         ///     Gets the test orders.
         /// </summary>

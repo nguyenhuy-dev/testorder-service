@@ -23,6 +23,7 @@ namespace TestOrderService.API.Middleware
         ///     The logger
         /// </summary>
         private readonly ILogger<GlobalExceptionHandlerMiddleware> _logger = logger;
+
         /// <summary>
         ///     The next
         /// </summary>
@@ -104,6 +105,7 @@ namespace TestOrderService.API.Middleware
                 case BusinessRuleException businessRuleException:
                     _logger.LogWarning(businessRuleException, "Business rule violation.");
                     break;
+
                 default:
                     _logger.LogError(ex, "Unhandled exception: {ExceptionType} - {Message}.", ex.GetType().Name, ex.Message);
                     break;
@@ -163,6 +165,7 @@ namespace TestOrderService.API.Middleware
             };
         }
     }
+
 
     /// <summary>
     ///     Error response dto.
