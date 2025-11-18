@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Aspire.Confluent.Kafka" Version="13.0.0"/>
         <PackageReference Include="Google.Protobuf" Version="3.33.1"/>
         <PackageReference Include="Grpc.Net.Client" Version="2.76.0-pre1"/>
         <PackageReference Include="Grpc.Tools" Version="2.76.0">
@@ -38,5 +39,6 @@
     <ItemGroup>
         <Protobuf Include="gRPC\Protos\patient.proto" GrpcServices="Client"/>
         <Protobuf Include="gRPC\Protos\user.proto" GrpcServices="Client"/>
+        <Protobuf Include="gRPC\Protos\privilege.proto" GrpcServices="Client"/>
     </ItemGroup>
 </Project>

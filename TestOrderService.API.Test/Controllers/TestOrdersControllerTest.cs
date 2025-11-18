@@ -1,11 +1,13 @@
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using System.Security.Claims;
 using TestOrderService.API.Commons;
 using TestOrderService.API.Controllers;
 using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Exceptions;
+using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
 using TestOrderService.Domain.Entities;
@@ -464,6 +466,149 @@ namespace TestOrderService.API.Test.Controllers
 
             // Assert
             Assert.That(ex!.Message, Is.EqualTo("Unexpected error"));
+        }
+
+        // ---------------------------------------------------------
+        // Helper: Fake HttpContext with Claims
+        // ---------------------------------------------------------
+        private void SetUserWithClaim(string? nameIdentifier)
+        {
+            var claims = new List<Claim>();
+
+            if (nameIdentifier != null)
+            {
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, nameIdentifier));
+            }
+
+            var identity = new ClaimsIdentity(claims, "TestAuth");
+            var principal = new ClaimsPrincipal(identity);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = principal
+                }
+            };
+        }
+
+        // ---------------------------------------------------------
+        // 1. SUCCESS CASE - RETURN 201
+        // ---------------------------------------------------------
+        [Test]
+        public async Task CreateTestOrder_ShouldReturnCreated_WhenValid()
+        {
+            // Arrange
+            var patientId = Guid.NewGuid();
+            var createById = Guid.NewGuid().ToString();
+            SetUserWithClaim(createById);
+
+            var dto = new CreateTestOrderDto(Guid.NewGuid(), DateTime.UtcNow, null);
+
+            var expected = new TestOrder
+            {
+                TestOrderId = Guid.NewGuid(),
+                PatientId = patientId
+            };
+
+            CreateTestOrderCommand? capturedCmd = null;
+
+            _mockSender
+                .Setup(s => s.Send(It.IsAny<CreateTestOrderCommand>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expected)
+                .Callback<IRequest<TestOrder>, CancellationToken>((cmd, _) =>
+                {
+                    capturedCmd = cmd as CreateTestOrderCommand;
+                });
+
+            // Act
+            var result = await _controller.CreateTestOrder(patientId, dto, CancellationToken.None);
+
+            // Assert
+            var created = result as ObjectResult;
+            Assert.That(created, Is.Not.Null);
+            Assert.That(created!.StatusCode, Is.EqualTo(StatusCodes.Status201Created));
+            Assert.That(created.Value, Is.EqualTo(expected));
+
+            // Validate mapped command
+            Assert.That(capturedCmd, Is.Not.Null);
+            Assert.That(capturedCmd!.PatientId, Is.EqualTo(patientId));
+            Assert.That(capturedCmd.CreateById.ToString(), Is.EqualTo(createById));
+        }
+
+        // ---------------------------------------------------------
+        // 2. MISSING CLAIM → Guid.TryParse FAIL → THROW INVALID OPERATION
+        // ---------------------------------------------------------
+        [Test]
+        public void CreateTestOrder_ShouldThrow_WhenUserIdMissing()
+        {
+            // Arrange
+            SetUserWithClaim(null); // no claim
+
+            var patientId = Guid.NewGuid();
+            var dto = new CreateTestOrderDto(Guid.NewGuid(), DateTime.UtcNow, null);
+
+            // Act + Assert
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await _controller.CreateTestOrder(patientId, dto, CancellationToken.None));
+
+            Assert.That(
+                ex!.Message,
+                Does.Contain("Can't parse 'createById' to Guid")
+            );
+
+            _mockSender.Verify(s => s.Send(It.IsAny<CreateTestOrderCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        // ---------------------------------------------------------
+        // 3. CLAIM NOT GUID → FAIL PARSE → THROW INVALID OPERATION
+        // ---------------------------------------------------------
+        [Test]
+        public void CreateTestOrder_ShouldThrow_WhenUserIdInvalidGuid()
+        {
+            // Arrange
+            SetUserWithClaim("not-a-guid");
+
+            var patientId = Guid.NewGuid();
+            var dto = new CreateTestOrderDto(Guid.NewGuid(), DateTime.UtcNow, null);
+
+            // Act + Assert
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await _controller.CreateTestOrder(patientId, dto, CancellationToken.None));
+
+            Assert.That(
+                ex!.Message,
+                Does.Contain("Can't parse 'createById' to Guid")
+            );
+
+            _mockSender.Verify(s => s.Send(It.IsAny<CreateTestOrderCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        // ---------------------------------------------------------
+        // 4. SENDER THROWS → CONTROLLER BUBBLES EXCEPTION
+        // ---------------------------------------------------------
+        [Test]
+        public void CreateTestOrder_ShouldBubbleException_WhenHandlerFails()
+        {
+            // Arrange
+            var patientId = Guid.NewGuid();
+            var createById = Guid.NewGuid().ToString();
+            SetUserWithClaim(createById);
+
+            var dto = new CreateTestOrderDto(Guid.NewGuid(), DateTime.UtcNow, null);
+
+            var expected = new Exception("Service crashed");
+
+            _mockSender
+                .Setup(s => s.Send(It.IsAny<CreateTestOrderCommand>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(expected);
+
+            // Act + Assert
+            var ex = Assert.ThrowsAsync<Exception>(async () =>
+                await _controller.CreateTestOrder(patientId, dto, CancellationToken.None)
+            );
+
+            Assert.That(ex!.Message, Is.EqualTo("Service crashed"));
         }
     }
 }

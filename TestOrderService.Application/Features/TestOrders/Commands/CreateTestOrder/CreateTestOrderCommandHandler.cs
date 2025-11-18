@@ -1,5 +1,8 @@
 ﻿using Mapster;
+using Microsoft.Extensions.Logging;
+using TestOrderService.Application.IntegrationEvents;
 using TestOrderService.Application.Interfaces;
+using TestOrderService.Application.Interfaces.EventBus;
 using TestOrderService.Application.Interfaces.Message;
 using Entities=TestOrderService.Domain.Entities;
 
@@ -12,8 +15,14 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.CreateTestOr
     ///     cref="ICommandHandler{CreateTestOrderCommand,Entities}.TestOrder&gt;" />
     public class CreateTestOrderCommandHandler(
         ITestOrderRepository testOrderRepository,
-        IUnitOfWork unitOfWork) : ICommandHandler<CreateTestOrderCommand, Entities.TestOrder>
+        IUnitOfWork unitOfWork,
+        IEventPublisher eventPublisher,
+        ILogger<CreateTestOrderCommandHandler> logger) : ICommandHandler<CreateTestOrderCommand, Entities.TestOrder>
     {
+
+        private readonly IEventPublisher _eventPublisher = eventPublisher;
+
+        private readonly ILogger<CreateTestOrderCommandHandler> _logger = logger;
         /// <summary>
         ///     The test order repository
         /// </summary>
@@ -36,7 +45,11 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.CreateTestOr
 
             var createdTestOrder = await _testOrderRepository.CreateTestOrderAsync(testOrder, cancellationToken);
 
+            var createdTestOrderEvent = createdTestOrder.Adapt<TestOrderCreatedIntegrationEvent>();
+            await _eventPublisher.PublishAsync(createdTestOrderEvent);
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Created test order with id: 'TestOrderId' {TestOrderId}", createdTestOrder.TestOrderId);
 
             return createdTestOrder;
         }

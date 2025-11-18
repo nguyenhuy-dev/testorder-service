@@ -1,21 +1,31 @@
 using FluentValidation;
 using Grpc.Net.Client;
+using IAMService.API.gRPC.Protos;
 using IAMService.API.gRPC.Protos.UserProto;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Patient_TestOrder_Service.API.gRPC.Protos.PatientProto;
 using Scalar.AspNetCore;
 using TestOrderService.API.Converters;
 using TestOrderService.API.gRPC.Services;
 using TestOrderService.API.Middleware;
+using TestOrderService.API.Middleware.Authentication;
+using TestOrderService.API.Middleware.Authorization;
 using TestOrderService.Application;
 using TestOrderService.Application.Behaviors;
 using TestOrderService.Application.Interfaces;
+using TestOrderService.Application.Interfaces.EventBus;
 using TestOrderService.Application.Interfaces.gRPC;
 using TestOrderService.Infrastructure.Data;
+using TestOrderService.Infrastructure.EventBus;
+using TestOrderService.Infrastructure.EventBus.Kafka;
 using TestOrderService.Infrastructure.gRPC.Clients;
 using TestOrderService.Infrastructure.Repositories;
+using TestOrderService.Infrastructure.Services;
 var builder = WebApplication.CreateBuilder(args);
+
+var configuration = builder.Configuration;
 
 builder.Configuration.AddJsonFile("/run/secrets/secrets_file", true);
 
@@ -62,7 +72,15 @@ builder.Services.AddSingleton(provider =>
 });
 builder.Services.AddScoped<IUserGrpcClient, UserGrpcClient>();
 
+builder.Services.AddGrpcClient<Privilege.PrivilegeClient>(o =>
+    {
+        o.Address = new Uri(builder.Configuration["IAM_GRPC_URL"] ?? "http://localhost:5095");
+    }
+);
+builder.Services.AddScoped<IPrivilegeGrpcClient, PrivilegeGrpcClient>();
+
 builder.Services.AddGrpc();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -72,21 +90,41 @@ builder.Services.AddCors(options =>
             .AllowCredentials());
 });
 
+builder.AddKafkaProducer("kafka");
+var kafkaTopic = builder.Configuration["EVENT_PUBLISHING_TOPICS"];
+if (!string.IsNullOrEmpty(kafkaTopic))
+    builder.AddKafkaEventPublisher(kafkaTopic);
+else
+    builder.Services.AddTransient<IEventPublisher, NullEventPublisher>();
+
+builder.Services.AddAuthentication("JwtBearer")
+    .AddScheme<LabAuthenticationSchemeOptions, LabAuthenticationHandler>("JwtBearer", configureOptions =>
+        {
+            var sectionJwt = configuration.GetSection("Jwt");
+            configureOptions.IssuerSigningKey = sectionJwt["SigningKey"] ?? throw new InvalidOperationException("'SigningKey' can't be read.");
+            configureOptions.ValidIssuer = sectionJwt["Issuer"] ?? throw new InvalidOperationException("'Issuer' can't be read.");
+            configureOptions.ValidAudience = sectionJwt["Audience"] ?? throw new InvalidOperationException("'Audience' can't be read.");
+        }
+    );
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, DynamicAuthorizationPolicyProvider>();
+builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-app.UseCors("AllowFrontend");
+app.MapOpenApi();
+
 app.MapGet("/", () => Results.Ok("Welcome to Test Order Service")).AllowAnonymous();
 app.MapScalarApiReference().AllowAnonymous();
 
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
-app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseMiddleware<AuthenticationGateMiddleware>();
+app.UseAuthorization();
 
 app.MapControllers();
 

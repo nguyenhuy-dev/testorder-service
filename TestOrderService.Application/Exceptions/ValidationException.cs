@@ -15,6 +15,7 @@
         {
             ErrorsDictionary = errorsDictionary;
         }
+
         /// <summary>
         ///     Gets or sets the errors dictionary.
         /// </summary>
