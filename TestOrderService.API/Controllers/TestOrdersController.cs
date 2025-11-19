@@ -1,5 +1,6 @@
 using Mapster;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TestOrderService.API.Commons;
@@ -32,7 +33,7 @@ namespace TestOrderService.API.Controllers
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Can't parse '{nameof(createById)}' to Guid: {createById}.</exception>
-        [HttpPost("{patientId}"), ProducesResponseType(typeof(ApiResponse<TestOrder>), StatusCodes.Status201Created), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+        [HttpPost("{patientId}"), Authorize(Policy = "create_test_order"), ProducesResponseType(typeof(ApiResponse<TestOrder>), StatusCodes.Status201Created), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> CreateTestOrder(Guid patientId, [FromBody] CreateTestOrderDto createTestOrderDto, CancellationToken cancellationToken = default)
         {
             var testOrderCommand = createTestOrderDto.Adapt<CreateTestOrderCommand>();
@@ -55,7 +56,7 @@ namespace TestOrderService.API.Controllers
         /// <param name="id">The id</param>
         /// <param name="cancellationToken">The cancellation token</param>
         /// <returns>A task containing the action result</returns>
-        [HttpDelete("{id:guid}"), ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+        [HttpDelete("{id:guid}"), AllowAnonymous, ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> DeleteTestOrder(Guid id, CancellationToken cancellationToken = default)
         {
             var command = new DeleteTestOrderCommand(id);

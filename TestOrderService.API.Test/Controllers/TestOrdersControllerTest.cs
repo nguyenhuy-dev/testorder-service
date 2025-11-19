@@ -5,8 +5,10 @@ using Moq;
 using System.Security.Claims;
 using TestOrderService.API.Commons;
 using TestOrderService.API.Controllers;
+using TestOrderService.API.Middleware;
 using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Exceptions;
+using TestOrderService.Application.Features.TestOrders.Commands;
 using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
@@ -609,6 +611,140 @@ namespace TestOrderService.API.Test.Controllers
             );
 
             Assert.That(ex!.Message, Is.EqualTo("Service crashed"));
+        }
+
+        [Test]
+        public async Task DeleteTestOrder_ShouldReturnOk_WhenSuccessful()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+
+            _mockSender
+                .Setup(s => s.Send(It.IsAny<DeleteTestOrderCommand>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _controller.DeleteTestOrder(id, CancellationToken.None);
+
+            // Assert
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult, Is.Not.Null);
+            Assert.That(okResult!.StatusCode, Is.EqualTo(200));
+
+            var response = okResult.Value as ApiResponse<object>;
+            Assert.That(response, Is.Not.Null);
+
+            var data = response!.Data;
+            Assert.That(data, Is.Not.Null);
+
+            // ---- READ PROPERTIES USING REFLECTION ----
+            var type = data.GetType();
+
+            var testOrderIdProp = type.GetProperty("TestOrderId");
+            var deletedProp = type.GetProperty("Deleted");
+
+            Assert.That(testOrderIdProp, Is.Not.Null);
+            Assert.That(deletedProp, Is.Not.Null);
+
+            var testOrderIdValue = (Guid)testOrderIdProp!.GetValue(data)!;
+            var deletedValue = (bool)deletedProp!.GetValue(data)!;
+
+            Assert.That(testOrderIdValue, Is.EqualTo(id));
+            Assert.That(deletedValue, Is.True);
+
+            // Verify command sent
+            _mockSender.Verify(s =>
+                    s.Send(It.Is<DeleteTestOrderCommand>(c => c.TestOrderId == id),
+                        It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Test]
+        public async Task DeleteTestOrder_ShouldReturnBadRequest_WhenResultIsFalse()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+
+            _mockSender
+                .Setup(s => s.Send(It.IsAny<DeleteTestOrderCommand>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            // Act
+            var result = await _controller.DeleteTestOrder(id, CancellationToken.None);
+
+            // Assert
+            var badRequest = result as BadRequestObjectResult;
+            Assert.That(badRequest, Is.Not.Null);
+            Assert.That(badRequest!.StatusCode, Is.EqualTo(400));
+
+            var error = badRequest.Value as ErrorResponse;
+            Assert.That(error, Is.Not.Null);
+            Assert.That(error!.StatusCode, Is.EqualTo(400));
+            Assert.That(error.Message,
+                Is.EqualTo("Cannot delete this TestOrder. Only Completed TestOrders can be deleted."));
+
+            _mockSender.Verify(s =>
+                    s.Send(It.Is<DeleteTestOrderCommand>(c => c.TestOrderId == id),
+                        It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+        [Test]
+        public void DeleteTestOrder_ShouldThrowNotFoundException_WhenNotFound()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var expected = new NotFoundException("Test order not found");
+
+            _mockSender
+                .Setup(s => s.Send(It.IsAny<DeleteTestOrderCommand>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(expected);
+
+            // Act
+            var ex = Assert.ThrowsAsync<NotFoundException>(() =>
+                _controller.DeleteTestOrder(id, CancellationToken.None));
+
+            // Assert
+            Assert.That(ex!.Message, Is.EqualTo("Test order not found"));
+        }
+        [Test]
+        public void DeleteTestOrder_ShouldThrowBusinessRuleException_WhenStatusInvalid()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var expected = new BusinessRuleException(
+                "Cannot delete",
+                "Only completed test orders can be deleted."
+            );
+
+            _mockSender
+                .Setup(s => s.Send(It.IsAny<DeleteTestOrderCommand>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(expected);
+
+            // Act
+            var ex = Assert.ThrowsAsync<BusinessRuleException>(() =>
+                _controller.DeleteTestOrder(id, CancellationToken.None));
+
+            // Assert
+            Assert.That(ex!.Message, Is.EqualTo("Only completed test orders can be deleted."));
+            Assert.That(ex.Title, Is.EqualTo("Cannot delete"));
+        }
+        [Test]
+        public void DeleteTestOrder_ShouldBubbleUnexpectedException()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var expected = new Exception("Unexpected error");
+
+            _mockSender
+                .Setup(s => s.Send(It.IsAny<DeleteTestOrderCommand>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(expected);
+
+            // Act
+            var ex = Assert.ThrowsAsync<Exception>(() =>
+                _controller.DeleteTestOrder(id, CancellationToken.None));
+
+            // Assert
+            Assert.That(ex!.Message, Is.EqualTo("Unexpected error"));
         }
     }
 }

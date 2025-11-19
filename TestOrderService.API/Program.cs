@@ -112,7 +112,6 @@ builder.Services.AddSingleton<IAuthorizationPolicyProvider, DynamicAuthorization
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 
-
 var app = builder.Build();
 
 app.MapOpenApi();
@@ -122,9 +121,12 @@ app.MapScalarApiReference().AllowAnonymous();
 
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
+app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseMiddleware<AuthenticationGateMiddleware>();
 app.UseAuthorization();
+
 
 app.MapControllers();
 
