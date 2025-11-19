@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Patient_TestOrder_Service.API.gRPC.Protos.PatientProto;
 using Scalar.AspNetCore;
+using System.Text.Json.Serialization;
 using TestOrderService.API.Converters;
 using TestOrderService.API.gRPC.Services;
 using TestOrderService.API.Middleware;
@@ -34,6 +35,7 @@ builder.Services.AddControllers()
         {
             options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
             options.JsonSerializerOptions.Converters.Add(new NullableDateOnlyJsonConverter());
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         }
     );
 

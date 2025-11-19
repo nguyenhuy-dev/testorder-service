@@ -10,6 +10,7 @@ using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Exceptions;
 using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder;
+using TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
 using TestOrderService.Domain.Entities;
@@ -408,6 +409,310 @@ namespace TestOrderService.API.Test.Controllers
 
             var apiResponse = okResult.Value as ApiResponse<TestOrderDetailDto>;
             Assert.That(apiResponse!.Data!.TestOrderId, Is.EqualTo(id));
+        }
+
+        [Test]
+        public async Task UpdateTestOrder_ShouldReturnOk_WhenUpdateSuccessful()
+        {
+            // Arrange
+            var testOrderId = Guid.NewGuid();
+            var updateById = Guid.NewGuid();
+            var updateDto = new UpdateTestOrderDto(
+                Guid.NewGuid(),
+                DateTime.UtcNow,
+                "Updated description",
+                StatusTestOrder.Completed
+            );
+
+            var updatedTestOrder = new TestOrder
+            {
+                TestOrderId = testOrderId,
+                PatientId = Guid.NewGuid(),
+                Status = StatusTestOrder.Completed,
+                TestOrderDescription = "Updated description",
+                RunById = updateDto.RunById!.Value,
+                RunAt = updateDto.RunAt,
+                CreateById = Guid.NewGuid(),
+                CreateAt = DateTime.UtcNow.AddDays(-1),
+                UpdateById = updateById,
+                UpdateAt = DateTime.UtcNow
+            };
+
+            _mockSender.Setup(s => s.Send(It.IsAny<IRequest<TestOrder>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(updatedTestOrder);
+
+            // Setup controller context with user ID header
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            _controller.ControllerContext.HttpContext.Request.Headers["X-User-Id"] = updateById.ToString();
+
+            // Act
+            var actionResult = await _controller.UpdateTestOrder(testOrderId, updateDto, CancellationToken.None);
+
+            // Assert
+            var okResult = actionResult as OkObjectResult;
+            Assert.That(okResult, Is.Not.Null);
+            Assert.That(okResult!.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+
+            var apiResponse = okResult.Value as ApiResponse<TestOrder>;
+            Assert.Multiple(() =>
+            {
+                Assert.That(apiResponse, Is.Not.Null);
+                Assert.That(apiResponse!.StatusCode, Is.EqualTo(200));
+                Assert.That(apiResponse.Message, Is.EqualTo("Test order updated successfully."));
+                Assert.That(apiResponse.Data, Is.EqualTo(updatedTestOrder));
+            });
+
+            _mockSender.Verify(s => s.Send(It.Is<IRequest<TestOrder>>(request =>
+                request as UpdateTestOrderCommand != null &&
+                (request as UpdateTestOrderCommand)!.TestOrderId == testOrderId &&
+                (request as UpdateTestOrderCommand)!.UpdateById == updateById &&
+                (request as UpdateTestOrderCommand)!.RunById == updateDto.RunById &&
+                (request as UpdateTestOrderCommand)!.RunAt == updateDto.RunAt &&
+                (request as UpdateTestOrderCommand)!.TestOrderDescription == updateDto.TestOrderDescription &&
+                (request as UpdateTestOrderCommand)!.Status == updateDto.Status
+            ), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task UpdateTestOrder_ShouldReturnUnauthorized_WhenUserIdIsInvalid()
+        {
+            // Arrange
+            var testOrderId = Guid.NewGuid();
+            var updateDto = new UpdateTestOrderDto(
+                null,
+                null,
+                "Updated description",
+                StatusTestOrder.Completed
+            );
+
+            // Setup controller context without user ID
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            // Act
+            var actionResult = await _controller.UpdateTestOrder(testOrderId, updateDto, CancellationToken.None);
+
+            // Assert
+            var unauthorizedResult = actionResult as UnauthorizedObjectResult;
+            Assert.That(unauthorizedResult, Is.Not.Null);
+            Assert.That(unauthorizedResult!.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized));
+
+            var errorResponse = unauthorizedResult.Value as ErrorResponse;
+            Assert.Multiple(() =>
+            {
+                Assert.That(errorResponse, Is.Not.Null);
+                Assert.That(errorResponse!.StatusCode, Is.EqualTo(401));
+                Assert.That(errorResponse.Message, Is.EqualTo("Invalid user identifier."));
+            });
+
+            _mockSender.Verify(s => s.Send(It.IsAny<IRequest<TestOrder>>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task UpdateTestOrder_ShouldSetTestOrderId_FromRouteParameter()
+        {
+            // Arrange
+            var testOrderId = Guid.NewGuid();
+            var updateById = Guid.NewGuid();
+            var updateDto = new UpdateTestOrderDto(
+                null,
+                null,
+                null,
+                StatusTestOrder.Pending
+            );
+
+            var updatedTestOrder = new TestOrder
+            {
+                TestOrderId = testOrderId,
+                PatientId = Guid.NewGuid(),
+                Status = StatusTestOrder.Pending,
+                CreateById = Guid.NewGuid(),
+                CreateAt = DateTime.UtcNow,
+                UpdateById = updateById,
+                UpdateAt = DateTime.UtcNow
+            };
+
+            UpdateTestOrderCommand? capturedCommand = null;
+            _mockSender.Setup(s => s.Send(It.IsAny<IRequest<TestOrder>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(updatedTestOrder)
+                .Callback<IRequest<TestOrder>, CancellationToken>((request, _) =>
+                {
+                    capturedCommand = request as UpdateTestOrderCommand;
+                });
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            _controller.ControllerContext.HttpContext.Request.Headers["X-User-Id"] = updateById.ToString();
+
+            // Act
+            await _controller.UpdateTestOrder(testOrderId, updateDto, CancellationToken.None);
+
+            // Assert
+            Assert.That(capturedCommand, Is.Not.Null);
+            Assert.That(capturedCommand!.TestOrderId, Is.EqualTo(testOrderId));
+        }
+
+        [Test]
+        public async Task UpdateTestOrder_ShouldSetUpdateById_FromUserHeader()
+        {
+            // Arrange
+            var testOrderId = Guid.NewGuid();
+            var updateById = Guid.NewGuid();
+            var updateDto = new UpdateTestOrderDto(
+                null,
+                null,
+                null,
+                null
+            );
+
+            var updatedTestOrder = new TestOrder
+            {
+                TestOrderId = testOrderId,
+                PatientId = Guid.NewGuid(),
+                Status = StatusTestOrder.Pending,
+                CreateById = Guid.NewGuid(),
+                CreateAt = DateTime.UtcNow,
+                UpdateById = updateById,
+                UpdateAt = DateTime.UtcNow
+            };
+
+            UpdateTestOrderCommand? capturedCommand = null;
+            _mockSender.Setup(s => s.Send(It.IsAny<IRequest<TestOrder>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(updatedTestOrder)
+                .Callback<IRequest<TestOrder>, CancellationToken>((request, _) =>
+                {
+                    capturedCommand = request as UpdateTestOrderCommand;
+                });
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            _controller.ControllerContext.HttpContext.Request.Headers["X-User-Id"] = updateById.ToString();
+
+            // Act
+            await _controller.UpdateTestOrder(testOrderId, updateDto, CancellationToken.None);
+
+            // Assert
+            Assert.That(capturedCommand, Is.Not.Null);
+            Assert.That(capturedCommand!.UpdateById, Is.EqualTo(updateById));
+        }
+
+        [Test]
+        public async Task UpdateTestOrder_ShouldHandlePartialUpdate()
+        {
+            // Arrange
+            var testOrderId = Guid.NewGuid();
+            var updateById = Guid.NewGuid();
+            var updateDto = new UpdateTestOrderDto(
+                null,
+                null,
+                "Only description updated",
+                null
+            );
+
+            var updatedTestOrder = new TestOrder
+            {
+                TestOrderId = testOrderId,
+                PatientId = Guid.NewGuid(),
+                Status = StatusTestOrder.Pending,
+                TestOrderDescription = "Only description updated",
+                CreateById = Guid.NewGuid(),
+                CreateAt = DateTime.UtcNow,
+                UpdateById = updateById,
+                UpdateAt = DateTime.UtcNow
+            };
+
+            _mockSender.Setup(s => s.Send(It.IsAny<IRequest<TestOrder>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(updatedTestOrder);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            _controller.ControllerContext.HttpContext.Request.Headers["X-User-Id"] = updateById.ToString();
+
+            // Act
+            var actionResult = await _controller.UpdateTestOrder(testOrderId, updateDto, CancellationToken.None);
+
+            // Assert
+            var okResult = actionResult as OkObjectResult;
+            Assert.That(okResult, Is.Not.Null);
+
+            _mockSender.Verify(s => s.Send(It.Is<IRequest<TestOrder>>(request =>
+                request as UpdateTestOrderCommand != null &&
+                (request as UpdateTestOrderCommand)!.TestOrderDescription == "Only description updated" &&
+                (request as UpdateTestOrderCommand)!.RunById == null &&
+                (request as UpdateTestOrderCommand)!.RunAt == null &&
+                (request as UpdateTestOrderCommand)!.Status == null
+            ), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task UpdateTestOrder_ShouldMapDtoToCommand_Correctly()
+        {
+            // Arrange
+            var testOrderId = Guid.NewGuid();
+            var updateById = Guid.NewGuid();
+            var runById = Guid.NewGuid();
+            var runAt = DateTime.UtcNow;
+            var description = "Test description";
+            var status = StatusTestOrder.Completed;
+
+            var updateDto = new UpdateTestOrderDto(
+                runById,
+                runAt,
+                description,
+                status
+            );
+
+            var updatedTestOrder = new TestOrder
+            {
+                TestOrderId = testOrderId,
+                PatientId = Guid.NewGuid(),
+                Status = status,
+                TestOrderDescription = description,
+                RunById = runById,
+                RunAt = runAt,
+                CreateById = Guid.NewGuid(),
+                CreateAt = DateTime.UtcNow,
+                UpdateById = updateById,
+                UpdateAt = DateTime.UtcNow
+            };
+
+            UpdateTestOrderCommand? capturedCommand = null;
+            _mockSender.Setup(s => s.Send(It.IsAny<IRequest<TestOrder>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(updatedTestOrder)
+                .Callback<IRequest<TestOrder>, CancellationToken>((request, _) =>
+                {
+                    capturedCommand = request as UpdateTestOrderCommand;
+                });
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            _controller.ControllerContext.HttpContext.Request.Headers["X-User-Id"] = updateById.ToString();
+
+            // Act
+            await _controller.UpdateTestOrder(testOrderId, updateDto, CancellationToken.None);
+
+            // Assert
+            Assert.That(capturedCommand, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(capturedCommand!.RunById, Is.EqualTo(runById));
+                Assert.That(capturedCommand.RunAt, Is.EqualTo(runAt));
+                Assert.That(capturedCommand.TestOrderDescription, Is.EqualTo(description));
+                Assert.That(capturedCommand.Status, Is.EqualTo(status));
+            });
         }
 
 
