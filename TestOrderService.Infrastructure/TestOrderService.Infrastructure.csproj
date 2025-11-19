@@ -38,6 +38,7 @@
 
     <ItemGroup>
         <Protobuf Include="gRPC\Protos\patient.proto" GrpcServices="Client"/>
+        <Protobuf Include="gRPC\Protos\privilege.proto" GrpcServices="Client"/>
         <Protobuf Include="gRPC\Protos\user.proto" GrpcServices="Client"/>
         <Protobuf Include="gRPC\Protos\privilege.proto" GrpcServices="Client"/>
     </ItemGroup>
