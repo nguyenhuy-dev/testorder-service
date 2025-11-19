@@ -8,6 +8,7 @@ using TestOrderService.API.Middleware;
 using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder;
+using TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
 using TestOrderService.Domain.Entities;
@@ -42,12 +43,46 @@ namespace TestOrderService.API.Controllers
             if (!Guid.TryParse(createById, out var createByIdGuid))
                 throw new InvalidOperationException($"Can't parse '{nameof(createById)}' to Guid: {createById}.");
             testOrderCommand.CreateById = createByIdGuid;
-
             testOrderCommand.PatientId = patientId;
 
             var testOrder = await _sender.Send(testOrderCommand, cancellationToken);
 
             return StatusCode(StatusCodes.Status201Created, testOrder);
+        }
+
+        /// <summary>
+        ///     Updates the test order using the specified id
+        /// </summary>
+        /// <param name="id">The test order identifier.</param>
+        /// <param name="updateTestOrderDto">The update test order dto.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A task containing the action result</returns>
+        [HttpPut("{id:guid}"), ProducesResponseType(typeof(ApiResponse<TestOrder>), StatusCodes.Status200OK), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> UpdateTestOrder(Guid id, [FromBody] UpdateTestOrderDto updateTestOrderDto, CancellationToken cancellationToken = default)
+        {
+            var updateTestOrderCommand = updateTestOrderDto.Adapt<UpdateTestOrderCommand>();
+            updateTestOrderCommand.TestOrderId = id;
+
+            if (!TryGetUserId(out var updateByIdGuid))
+            {
+                return Unauthorized(new ErrorResponse
+                {
+                    StatusCode = 401,
+                    Message = "Invalid user identifier."
+                });
+            }
+            updateTestOrderCommand.UpdateById = updateByIdGuid;
+
+            var testOrder = await _sender.Send(updateTestOrderCommand, cancellationToken);
+
+            var response = new ApiResponse<TestOrder>
+            {
+                StatusCode = 200,
+                Message = "Test order updated successfully.",
+                Data = testOrder
+            };
+
+            return Ok(response);
         }
 
         /// <summary>
@@ -109,6 +144,15 @@ namespace TestOrderService.API.Controllers
             var result = await _sender.Send(query, ct);
 
             return Ok(ApiResponse<TestOrderDetailDto>.Success(result));
+        }
+
+        private bool TryGetUserId(out Guid userId)
+        {
+            var userIdValue = Request.Headers.TryGetValue("X-User-Id", out var headerValue)
+                ? headerValue.ToString()
+                : User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            return Guid.TryParse(userIdValue, out userId);
         }
     }
 }
