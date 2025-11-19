@@ -5,7 +5,7 @@ using TestOrderService.Application.IntegrationEvents;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.EventBus;
 using TestOrderService.Domain.Entities;
-namespace TestOrderService.Application.Features.TestOrders.Commands
+namespace TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder
 {
     public class DeleteTestOrderCommandHandler(
         ITestOrderRepository testOrderRepository,

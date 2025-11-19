@@ -4,5 +4,5 @@
     ///     Create test order data tranfer object.
     /// </summary>
     /// <seealso cref="System.IEquatable&lt;TestOrderService.Application.DTOs.CreateTestOrderDto&gt;" />
-    public sealed record CreateTestOrderDto(Guid RunById, DateTime RunAt, string? TestOrderDescription);
+    public sealed record CreateTestOrderDto(string? TestOrderDescription);
 }

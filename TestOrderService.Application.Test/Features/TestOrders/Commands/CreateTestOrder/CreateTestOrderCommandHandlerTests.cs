@@ -40,9 +40,7 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Commands.CreateT
             {
                 PatientId = Guid.NewGuid(),
                 TestOrderDescription = "Urgent blood test",
-                CreateById = Guid.NewGuid(),
-                RunById = Guid.NewGuid(),
-                RunAt = DateTime.UtcNow
+                CreateById = Guid.NewGuid()
             };
 
             // Simulate repository creation
@@ -53,9 +51,7 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Commands.CreateT
                 TestOrderDescription = command.TestOrderDescription,
                 Status = command.Status,
                 CreateAt = command.CreateAt,
-                CreateById = command.CreateById,
-                RunAt = command.RunAt,
-                RunById = command.RunById
+                CreateById = command.CreateById
             };
 
             _repositoryMock
@@ -128,9 +124,7 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Commands.CreateT
             {
                 PatientId = Guid.NewGuid(),
                 TestOrderDescription = "",
-                CreateById = Guid.NewGuid(),
-                RunById = Guid.NewGuid(),
-                RunAt = DateTime.UtcNow
+                CreateById = Guid.NewGuid()
             };
 
             var createdEntity = new Entities.TestOrder

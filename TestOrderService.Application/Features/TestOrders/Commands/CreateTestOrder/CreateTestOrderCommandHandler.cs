@@ -12,7 +12,8 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.CreateTestOr
     ///     Command handler for create test order implement.
     /// </summary>
     /// <seealso
-    ///     cref="ICommandHandler{CreateTestOrderCommand,Entities}.TestOrder&gt;" />
+    ///     cref="TestOrderService.Application.Interfaces.Message.ICommandHandler&lt;TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder.CreateTestOrderCommand, TestOrderService.Domain.Entities.TestOrder&gt;" />
+    /// <seealso cref="ICommandHandler{CreateTestOrderCommand,Entities}.TestOrder&gt;" />
     public class CreateTestOrderCommandHandler(
         ITestOrderRepository testOrderRepository,
         IUnitOfWork unitOfWork,
@@ -20,8 +21,14 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.CreateTestOr
         ILogger<CreateTestOrderCommandHandler> logger) : ICommandHandler<CreateTestOrderCommand, Entities.TestOrder>
     {
 
+        /// <summary>
+        ///     The event publisher
+        /// </summary>
         private readonly IEventPublisher _eventPublisher = eventPublisher;
 
+        /// <summary>
+        ///     The logger
+        /// </summary>
         private readonly ILogger<CreateTestOrderCommandHandler> _logger = logger;
         /// <summary>
         ///     The test order repository

@@ -8,13 +8,27 @@ using System.Text;
 using System.Text.Encodings.Web;
 namespace TestOrderService.API.Middleware.Authentication
 {
+    /// <summary>
+    ///     Lab Authentication Handler custom.
+    /// </summary>
+    /// <seealso
+    ///     cref="Microsoft.AspNetCore.Authentication.AuthenticationHandler&lt;TestOrderService.API.Middleware.Authentication.LabAuthenticationSchemeOptions&gt;" />
     public class LabAuthenticationHandler(
         IOptionsMonitor<LabAuthenticationSchemeOptions> options,
         ILoggerFactory loggerFactory,
         UrlEncoder encoder) : AuthenticationHandler<LabAuthenticationSchemeOptions>(options, loggerFactory, encoder)
     {
+        /// <summary>
+        ///     The logger
+        /// </summary>
         private readonly ILogger<LabAuthenticationHandler> _logger = loggerFactory.CreateLogger<LabAuthenticationHandler>();
 
+        /// <summary>
+        ///     Allows derived types to handle authentication.
+        /// </summary>
+        /// <returns>
+        ///     The <see cref="T:Microsoft.AspNetCore.Authentication.AuthenticateResult" />.
+        /// </returns>
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             _logger.LogInformation("Handling authentication...");
@@ -58,6 +72,12 @@ namespace TestOrderService.API.Middleware.Authentication
             return Task.FromResult(AuthenticateResult.Fail("Verify token unsuccessfully."));
         }
 
+        /// <summary>
+        ///     Verifies the token.
+        /// </summary>
+        /// <param name="tokenValue">The token value.</param>
+        /// <param name="claimsPrincipal">The claims principal.</param>
+        /// <returns></returns>
         private bool VerifyToken(string tokenValue, out ClaimsPrincipal? claimsPrincipal)
         {
             var handler = new JwtSecurityTokenHandler();
@@ -91,6 +111,13 @@ namespace TestOrderService.API.Middleware.Authentication
             }
         }
 
+        /// <summary>
+        ///     Determines whether [is pass path] [the specified path].
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns>
+        ///     <c>true</c> if [is pass path] [the specified path]; otherwise, <c>false</c>.
+        /// </returns>
         private static bool IsPassPath(string? path)
         {
             return !path!.StartsWith("/api");

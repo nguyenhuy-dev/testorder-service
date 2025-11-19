@@ -34,9 +34,6 @@ namespace TestOrderService.API.gRPC.Services
                     CreateById = testOrder.CreateById.ToString(),
                     CreateAt = Timestamp.FromDateTime(testOrder.CreateAt.ToUniversalTime()),
                     RunById = testOrder.RunById.ToString(),
-                    RunAt = testOrder.RunAt.HasValue
-                        ? Timestamp.FromDateTime(testOrder.RunAt.Value.ToUniversalTime())
-                        : null,
                     UpdateById = testOrder.UpdateById?.ToString(),
                     UpdateAt = testOrder.UpdateAt.HasValue
                         ? Timestamp.FromDateTime(testOrder.UpdateAt.Value.ToUniversalTime())

@@ -9,7 +9,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Encodings.Web;
 using TestOrderService.API.Middleware.Authentication;
-namespace Patient_TestOrder_Service.API.Test.Middleware.Authentication
+namespace TestOrderService.API.Test.Middleware.Authentication
 {
     [TestFixture]
     public class LabAuthenticationHandlerTests

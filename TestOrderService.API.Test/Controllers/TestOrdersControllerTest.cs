@@ -8,8 +8,8 @@ using TestOrderService.API.Controllers;
 using TestOrderService.API.Middleware;
 using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Exceptions;
-using TestOrderService.Application.Features.TestOrders.Commands;
 using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
+using TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
 using TestOrderService.Domain.Entities;
@@ -166,7 +166,7 @@ namespace TestOrderService.API.Test.Controllers
             Assert.Multiple(() =>
             {
                 Assert.That(apiResponse, Is.Not.Null);
-                Assert.That(apiResponse!.Data.Items, Is.Empty);
+                Assert.That(apiResponse!.Data!.Items, Is.Empty);
                 Assert.That(apiResponse.Data.TotalCount, Is.EqualTo(0));
             });
         }
@@ -217,7 +217,7 @@ namespace TestOrderService.API.Test.Controllers
             var okResult = actionResult as OkObjectResult;
             var apiResponse = okResult!.Value as ApiResponse<PaginatedList<TestOrderDto>>;
 
-            Assert.That(apiResponse!.Data.Items.All(x => x.Status == "Completed"), Is.True);
+            Assert.That(apiResponse!.Data!.Items.All(x => x.Status == "Completed"), Is.True);
         }
 
         [Test]
@@ -266,7 +266,7 @@ namespace TestOrderService.API.Test.Controllers
 
             Assert.Multiple(() =>
             {
-                Assert.That(apiResponse!.Data.Items.Count, Is.EqualTo(5));
+                Assert.That(apiResponse!.Data!.Items.Count, Is.EqualTo(5));
                 Assert.That(apiResponse.Data.TotalCount, Is.EqualTo(15));
                 Assert.That(apiResponse.Data.PageNumber, Is.EqualTo(2));
                 Assert.That(apiResponse.Data.PageSize, Is.EqualTo(5));
@@ -371,7 +371,7 @@ namespace TestOrderService.API.Test.Controllers
             // Assert
             var okResult = actionResult as OkObjectResult;
             var apiResponse = okResult!.Value as ApiResponse<PaginatedList<TestOrderDto>>;
-            var firstOrder = apiResponse!.Data.Items.First();
+            var firstOrder = apiResponse!.Data!.Items[0];
 
             Assert.Multiple(() =>
             {
@@ -407,7 +407,7 @@ namespace TestOrderService.API.Test.Controllers
             Assert.That(okResult!.StatusCode, Is.EqualTo(200));
 
             var apiResponse = okResult.Value as ApiResponse<TestOrderDetailDto>;
-            Assert.That(apiResponse!.Data.TestOrderId, Is.EqualTo(id));
+            Assert.That(apiResponse!.Data!.TestOrderId, Is.EqualTo(id));
         }
 
 
@@ -505,7 +505,7 @@ namespace TestOrderService.API.Test.Controllers
             var createById = Guid.NewGuid().ToString();
             SetUserWithClaim(createById);
 
-            var dto = new CreateTestOrderDto(Guid.NewGuid(), DateTime.UtcNow, null);
+            var dto = new CreateTestOrderDto(null);
 
             var expected = new TestOrder
             {
@@ -548,7 +548,7 @@ namespace TestOrderService.API.Test.Controllers
             SetUserWithClaim(null); // no claim
 
             var patientId = Guid.NewGuid();
-            var dto = new CreateTestOrderDto(Guid.NewGuid(), DateTime.UtcNow, null);
+            var dto = new CreateTestOrderDto(null);
 
             // Act + Assert
             var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -572,7 +572,7 @@ namespace TestOrderService.API.Test.Controllers
             SetUserWithClaim("not-a-guid");
 
             var patientId = Guid.NewGuid();
-            var dto = new CreateTestOrderDto(Guid.NewGuid(), DateTime.UtcNow, null);
+            var dto = new CreateTestOrderDto(null);
 
             // Act + Assert
             var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -597,7 +597,7 @@ namespace TestOrderService.API.Test.Controllers
             var createById = Guid.NewGuid().ToString();
             SetUserWithClaim(createById);
 
-            var dto = new CreateTestOrderDto(Guid.NewGuid(), DateTime.UtcNow, null);
+            var dto = new CreateTestOrderDto(null);
 
             var expected = new Exception("Service crashed");
 

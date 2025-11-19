@@ -1,5 +1,5 @@
-using TestOrderService.Application.Features.TestOrders.Commands;
-namespace TestOrderService.Tests.Application.TestOrders.Commands
+using TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder;
+namespace TestOrderService.Application.Test.Features.TestOrders.Commands.DeleteTestOrder
 {
     [TestFixture]
     public class DeleteTestOrderCommandTest

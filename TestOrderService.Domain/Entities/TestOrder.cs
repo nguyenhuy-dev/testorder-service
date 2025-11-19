@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 namespace TestOrderService.Domain.Entities
 {
-    [Index(nameof(PatientId), nameof(ReviewId), nameof(CreateById), nameof(RunById), nameof(UpdateById))]
+    [Index(nameof(PatientId), nameof(ReviewId), nameof(CreateById), nameof(UpdateById))]
     public class TestOrder
     {
         [Key]
