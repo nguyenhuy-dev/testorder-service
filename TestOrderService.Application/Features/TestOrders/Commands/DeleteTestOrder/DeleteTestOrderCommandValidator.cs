@@ -1,6 +1,5 @@
 using FluentValidation;
-using TestOrderService.Application.Features.TestOrders.Commands;
-namespace TestOrderService.Application.Validators.TestOrder
+namespace TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder
 {
     /// <summary>
     ///     Validator cho DeleteTestOrderCommand.

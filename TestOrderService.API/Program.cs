@@ -74,7 +74,7 @@ builder.Services.AddScoped<IUserGrpcClient, UserGrpcClient>();
 
 builder.Services.AddGrpcClient<Privilege.PrivilegeClient>(o =>
     {
-        o.Address = new Uri(builder.Configuration["IAM_GRPC_URL"] ?? "http://localhost:5095");
+        o.Address = new Uri(builder.Configuration["IAM_GRPC_URL"] ?? "");
     }
 );
 builder.Services.AddScoped<IPrivilegeGrpcClient, PrivilegeGrpcClient>();

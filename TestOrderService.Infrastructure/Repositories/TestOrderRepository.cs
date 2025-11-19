@@ -34,6 +34,10 @@ namespace TestOrderService.Infrastructure.Repositories
         /// <returns></returns>
         public async Task<TestOrder> CreateTestOrderAsync(TestOrder testOrder, CancellationToken cancellationToken)
         {
+            // Temp
+            testOrder.RunById = Guid.Parse("00000000-0000-0000-0000-000000000001");
+            testOrder.RunAt = DateTime.UtcNow.AddHours(2);
+
             await _dbContext.AddAsync(testOrder, cancellationToken);
 
             return testOrder;

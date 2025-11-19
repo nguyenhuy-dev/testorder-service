@@ -13,7 +13,7 @@ using TestOrderService.Application.DTOs.gRPCs.GetPrivileges;
 using TestOrderService.Application.Exceptions;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.gRPC;
-namespace Patient_TestOrder_Service.API.Test.Middleware.Authorization
+namespace TestOrderService.API.Test.Middleware.Authorization
 {
     [TestFixture]
     public class DynamicAuthorizationPolicyProviderTests
@@ -70,6 +70,7 @@ namespace Patient_TestOrder_Service.API.Test.Middleware.Authorization
 
         private AuthorizationOptions _authOptions;
         private DynamicAuthorizationPolicyProvider _sut;
+
 
         // =====================================================================
         // CASE 1: SkipAuthorization → return null

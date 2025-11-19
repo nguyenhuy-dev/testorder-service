@@ -5,14 +5,34 @@ using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.gRPC;
 namespace TestOrderService.API.Middleware.Authorization
 {
+    /// <summary>
+    ///     Dynamic Authorization Policy Provider custom.
+    /// </summary>
+    /// <seealso cref="Microsoft.AspNetCore.Authorization.DefaultAuthorizationPolicyProvider" />
     public class DynamicAuthorizationPolicyProvider(
         IOptions<AuthorizationOptions> options,
         IServiceScopeFactory scopeFactory) : DefaultAuthorizationPolicyProvider(options)
     {
+        /// <summary>
+        ///     The authorization options
+        /// </summary>
         private readonly AuthorizationOptions _authorizationOptions = options.Value;
 
+        /// <summary>
+        ///     The scope factory
+        /// </summary>
         private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
 
+        /// <summary>
+        ///     Gets a <see cref="T:Microsoft.AspNetCore.Authorization.AuthorizationPolicy" /> from the given
+        ///     <paramref name="policyName" />
+        /// </summary>
+        /// <param name="policyName">The policy name to retrieve.</param>
+        /// <returns>
+        ///     The named <see cref="T:Microsoft.AspNetCore.Authorization.AuthorizationPolicy" />.
+        /// </returns>
+        /// <exception cref="TestOrderService.Application.Exceptions.ForbiddenAccessException"></exception>
+        /// <exception cref="System.InvalidOperationException">Unable to build authorization policy.</exception>
         public override async Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
         {
             // Whether skip authorization.

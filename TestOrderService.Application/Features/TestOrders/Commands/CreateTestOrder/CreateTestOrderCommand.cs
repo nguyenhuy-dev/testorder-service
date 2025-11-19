@@ -50,22 +50,6 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.CreateTestOr
         public DateTime CreateAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
-        ///     Gets or sets the run by identifier.
-        /// </summary>
-        /// <value>
-        ///     The run by identifier.
-        /// </value>
-        public Guid RunById { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the run at.
-        /// </summary>
-        /// <value>
-        ///     The run at.
-        /// </value>
-        public DateTime RunAt { get; set; }
-
-        /// <summary>
         ///     Gets or sets the test order patient description.
         /// </summary>
         /// <value>

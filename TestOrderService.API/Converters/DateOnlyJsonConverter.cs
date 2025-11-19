@@ -6,7 +6,7 @@ namespace TestOrderService.API.Converters
     /// <summary>
     ///     JSON converter for DateOnly that uses MM/dd/yyyy format.
     /// </summary>
-    /// <seealso cref="System.Text.Json.Serialization.JsonConverter&lt;System.DateOnly&gt;" />
+    /// <seealso cref="DateOnly" />
     public class DateOnlyJsonConverter : JsonConverter<DateOnly>
     {
         /// <summary>
@@ -55,7 +55,7 @@ namespace TestOrderService.API.Converters
     /// <summary>
     ///     JSON converter for nullable DateOnly that uses MM/dd/yyyy format.
     /// </summary>
-    /// <seealso cref="System.Text.Json.Serialization.JsonConverter&lt;System.DateOnly?&gt;" />
+    /// <seealso cref="DateOnly" />
     public class NullableDateOnlyJsonConverter : JsonConverter<DateOnly?>
     {
         /// <summary>
