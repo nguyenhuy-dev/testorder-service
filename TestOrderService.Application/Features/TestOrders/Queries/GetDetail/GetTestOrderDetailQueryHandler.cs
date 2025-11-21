@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using AutoMapper;
+using Mapster;
+using MediatR;
 using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Exceptions;
 using TestOrderService.Application.Interfaces;
@@ -12,6 +14,8 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
     public class GetTestOrderDetailQueryHandler
         : IRequestHandler<GetTestOrderDetailQuery, TestOrderDetailDto>
     {
+
+        private readonly IMapper _mapper;
         /// <summary>
         ///     The patient GRPC
         /// </summary>
@@ -71,6 +75,14 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
             var age = today.Year - patient.DateOfBirth.Year;
             if (patient.DateOfBirth > today.AddYears(-age)) age--;
 
+            var commentList = new List<CommentDto>();
+
+            foreach (var comment in t.Comments)
+            {
+                commentList.Add(comment.Adapt<CommentDto>());
+            }
+
+
             // 5. Build DTO
             return new TestOrderDetailDto
             {
@@ -91,7 +103,8 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
                 ReviewAt = t.ReviewAt,
                 CreatedBy = createdBy,
                 RunBy = runBy,
-                ReviewBy = reviewBy
+                ReviewBy = reviewBy,
+                Comments = commentList
             };
         }
     }

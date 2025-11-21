@@ -70,7 +70,10 @@ namespace TestOrderService.API.Test.Middleware
                 Arg.Any<Func<object, Exception?, string>>());
         }
 
-        [TestCase(typeof(NotFoundException), 404, "Resource not found."), TestCase(typeof(BadRequestException), 400, "Having bad request."), TestCase(typeof(UnauthorizedAccessException), 401, "Unauthorized access attempt."), TestCase(typeof(ForbiddenAccessException), 403, "Forbidden access attempt.")]
+        [TestCase(typeof(NotFoundException), 404, "Resource not found.")]
+        [TestCase(typeof(BadRequestException), 400, "Having bad request.")]
+        [TestCase(typeof(UnauthorizedAccessException), 401, "Unauthorized access attempt.")]
+        [TestCase(typeof(ForbiddenAccessException), 403, "Forbidden access attempt.")]
         public async Task SpecificException_ShouldReturnCorrectStatusAndLogWarning(Type exType, int expectedStatus, string logMessage)
         {
             var ex = (Exception)Activator.CreateInstance(exType, "msg")!;

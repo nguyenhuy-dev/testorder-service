@@ -199,5 +199,130 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Queries.GetDetai
             // Assert
             Assert.That(result.Age, Is.EqualTo(30));
         }
+
+        /// <summary>
+        ///     Handles the should include and map comments when test order has comments.
+        /// </summary>
+        [Test]
+        public async Task Handle_ShouldIncludeMappedComments_WhenTestOrderHasComments()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var patientId = Guid.NewGuid();
+            var comment1Id = Guid.NewGuid();
+            var comment2Id = Guid.NewGuid();
+
+            // 1. Create Comments
+            var comment1 = new Comment
+            {
+                CommentId = comment1Id,
+                Content = "Patient looks pale",
+                CreateByName = "Nurse Joy",
+                CreateAt = DateTime.UtcNow.AddHours(-2),
+                TestOrderId = id
+            };
+
+            var comment2 = new Comment
+            {
+                CommentId = comment2Id,
+                Content = "Vital signs stable",
+                CreateByName = "Dr. House",
+                CreateAt = DateTime.UtcNow.AddHours(-1),
+                TestOrderId = id
+            };
+
+            // 2. Create TestOrder with the comments attached
+            var testOrder = new TestOrder
+            {
+                TestOrderId = id,
+                PatientId = patientId,
+                Comments = new List<Comment> { comment1, comment2 }
+            };
+
+            // 3. Setup Patient (Required to pass the NotFound check before the loop)
+            var patient = new PatientDto
+            {
+                PatientId = patientId,
+                PatientName = "Test Patient",
+                DateOfBirth = new DateOnly(1990, 1, 1)
+            };
+
+            _repoMock.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(testOrder);
+
+            _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<PatientDto> { patient });
+
+            _userGrpcMock.Setup(u => u.GetAllUsers(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<UserDto>()); // Users irrelevant for this test, return empty
+
+            var query = new GetTestOrderDetailQuery(id);
+
+            // Act
+            var result = await _handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Comments, Is.Not.Null);
+                Assert.That(result.Comments.Count, Is.EqualTo(2));
+
+                // Verify mapping accuracy for first comment
+                var firstMapped = result.Comments.FirstOrDefault(c => c.CommentId == comment1Id);
+                Assert.That(firstMapped, Is.Not.Null);
+                Assert.That(firstMapped!.Content, Is.EqualTo("Patient looks pale"));
+                Assert.That(firstMapped.CreateByName, Is.EqualTo("Nurse Joy"));
+
+                // Verify mapping accuracy for second comment
+                var secondMapped = result.Comments.FirstOrDefault(c => c.CommentId == comment2Id);
+                Assert.That(secondMapped, Is.Not.Null);
+                Assert.That(secondMapped!.Content, Is.EqualTo("Vital signs stable"));
+            });
+        }
+
+        /// <summary>
+        ///     Handles the should return empty comment list when no comments exist.
+        /// </summary>
+        [Test]
+        public async Task Handle_ShouldReturnEmptyCommentList_WhenNoCommentsExist()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var patientId = Guid.NewGuid();
+
+            var testOrder = new TestOrder
+            {
+                TestOrderId = id,
+                PatientId = patientId,
+                Comments = new List<Comment>() // Empty List
+            };
+
+            var patient = new PatientDto
+            {
+                PatientId = patientId,
+                DateOfBirth = new DateOnly(1990, 1, 1)
+            };
+
+            _repoMock.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(testOrder);
+
+            _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<PatientDto> { patient });
+
+            _userGrpcMock.Setup(u => u.GetAllUsers(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<UserDto>());
+
+            var query = new GetTestOrderDetailQuery(id);
+
+            // Act
+            var result = await _handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Comments, Is.Not.Null);
+                Assert.That(result.Comments, Is.Empty);
+            });
+        }
     }
 }

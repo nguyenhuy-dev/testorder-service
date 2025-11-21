@@ -9,5 +9,6 @@ namespace TestOrderService.Application.Interfaces.gRPC
         /// <param name="cancellation">Cancellation token</param>
         /// <returns>List of users</returns>
         Task<List<UserDto>> GetAllUsers(CancellationToken cancellation);
+        Task<UserDto?> GetUserById(Guid userId, CancellationToken cancellation);
     }
 }

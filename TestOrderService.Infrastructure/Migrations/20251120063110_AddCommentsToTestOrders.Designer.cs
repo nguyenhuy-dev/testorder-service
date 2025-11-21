@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TestOrderService.Infrastructure.Data;
@@ -11,9 +12,11 @@ using TestOrderService.Infrastructure.Data;
 namespace TestOrderService.Infrastructure.Migrations
 {
     [DbContext(typeof(TestOrderServiceDbContext))]
-    partial class TestOrderServiceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251120063110_AddCommentsToTestOrders")]
+    partial class AddCommentsToTestOrders
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,10 +42,6 @@ namespace TestOrderService.Infrastructure.Migrations
                     b.Property<Guid>("CreateById")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CreateByName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<Guid>("TestOrderId")
                         .HasColumnType("uuid");
 
@@ -51,10 +50,6 @@ namespace TestOrderService.Infrastructure.Migrations
 
                     b.Property<Guid?>("UpdateById")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("UpdateByName")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.HasKey("CommentId");
 

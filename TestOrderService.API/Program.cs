@@ -44,6 +44,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<TestOrderServiceDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ITestOrderRepository, TestOrderRepository>();
 
 var applicationAssembly = typeof(IAssemblyReference).Assembly;

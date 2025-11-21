@@ -2,7 +2,6 @@ using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using TestOrderService.API.Commons;
 using TestOrderService.API.Middleware;
 using TestOrderService.Application.DTOs;
@@ -11,19 +10,16 @@ using TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder;
 using TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
+using TestOrderService.Application.Interfaces.gRPC;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Controllers
 {
     /// <summary>
     ///     Test orders apis.
     /// </summary>
-    /// <seealso cref="Microsoft.AspNetCore.Mvc.ControllerBase" />
-    [Route("api/[controller]"), ApiController]
-    public class TestOrdersController(ISender sender) : ControllerBase
+    [Route("api/[controller]")]
+    public class TestOrdersController(ISender sender, IUserGrpcClient userGrpcClient) : BaseApiController
     {
-        /// <summary>
-        ///     The sender
-        /// </summary>
         private readonly ISender _sender = sender;
 
         /// <summary>
@@ -34,15 +30,18 @@ namespace TestOrderService.API.Controllers
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Can't parse '{nameof(createById)}' to Guid: {createById}.</exception>
-        [HttpPost("{patientId}"), Authorize(Policy = "create_test_order"), ProducesResponseType(typeof(ApiResponse<TestOrder>), StatusCodes.Status201Created), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+        [HttpPost("{patientId}")]
+        [Authorize(Policy = "create_test_order")]
+        [ProducesResponseType(typeof(ApiResponse<TestOrder>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> CreateTestOrder(Guid patientId, [FromBody] CreateTestOrderDto createTestOrderDto, CancellationToken cancellationToken = default)
         {
             var testOrderCommand = createTestOrderDto.Adapt<CreateTestOrderCommand>();
 
-            var createById = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(createById, out var createByIdGuid))
-                throw new InvalidOperationException($"Can't parse '{nameof(createById)}' to Guid: {createById}.");
-            testOrderCommand.CreateById = createByIdGuid;
+            // Using BaseApiController helper property
+            testOrderCommand.CreateById = CurrentUserId;
             testOrderCommand.PatientId = patientId;
 
             var testOrder = await _sender.Send(testOrderCommand, cancellationToken);
@@ -57,32 +56,28 @@ namespace TestOrderService.API.Controllers
         /// <param name="updateTestOrderDto">The update test order dto.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task containing the action result</returns>
-        [HttpPut("{id:guid}"), ProducesResponseType(typeof(ApiResponse<TestOrder>), StatusCodes.Status200OK), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+        [HttpPut("{id:guid}")]
+        [ProducesResponseType(typeof(ApiResponse<TestOrder>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> UpdateTestOrder(Guid id, [FromBody] UpdateTestOrderDto updateTestOrderDto, CancellationToken cancellationToken = default)
         {
             var updateTestOrderCommand = updateTestOrderDto.Adapt<UpdateTestOrderCommand>();
             updateTestOrderCommand.TestOrderId = id;
 
-            if (!TryGetUserId(out var updateByIdGuid))
-            {
-                return Unauthorized(new ErrorResponse
-                {
-                    StatusCode = 401,
-                    Message = "Invalid user identifier."
-                });
-            }
-            updateTestOrderCommand.UpdateById = updateByIdGuid;
+            // Using BaseApiController helper property
+            updateTestOrderCommand.UpdateById = CurrentUserId;
 
             var testOrder = await _sender.Send(updateTestOrderCommand, cancellationToken);
 
-            var response = new ApiResponse<TestOrder>
+            return Ok(new ApiResponse<TestOrder>
             {
                 StatusCode = 200,
                 Message = "Test order updated successfully.",
                 Data = testOrder
-            };
-
-            return Ok(response);
+            });
         }
 
         /// <summary>
@@ -91,7 +86,13 @@ namespace TestOrderService.API.Controllers
         /// <param name="id">The id</param>
         /// <param name="cancellationToken">The cancellation token</param>
         /// <returns>A task containing the action result</returns>
-        [HttpDelete("{id:guid}"), AllowAnonymous, ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+        [HttpDelete("{id:guid}")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> DeleteTestOrder(Guid id, CancellationToken cancellationToken = default)
         {
             var command = new DeleteTestOrderCommand(id);
@@ -106,14 +107,12 @@ namespace TestOrderService.API.Controllers
                 });
             }
 
-            var response = new ApiResponse<object>
+            return Ok(new ApiResponse<object>
             {
                 StatusCode = 200,
                 Message = "Delete TestOrder successfully.",
                 Data = new { TestOrderId = id, Deleted = result }
-            };
-
-            return Ok(response);
+            });
         }
 
         /// <summary>
@@ -122,7 +121,10 @@ namespace TestOrderService.API.Controllers
         /// <param name="request">The request.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        [HttpGet, ProducesResponseType(typeof(ApiResponse<PaginatedList<TestOrderDto>>), StatusCodes.Status200OK), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+        [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PaginatedList<TestOrderDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetTestOrders([FromQuery] GetTestOrdersRequest request, CancellationToken cancellationToken = default)
         {
             var query = new GetTestOrdersQuery(request);
@@ -137,22 +139,17 @@ namespace TestOrderService.API.Controllers
         /// <param name="id">The id</param>
         /// <param name="ct">The ct</param>
         /// <returns>A task containing the action result</returns>
-        [HttpGet("{id:guid}/detail"), ProducesResponseType(typeof(ApiResponse<TestOrderDetailDto>), StatusCodes.Status200OK), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError), ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+        [HttpGet("{id:guid}/detail")]
+        [ProducesResponseType(typeof(ApiResponse<TestOrderDetailDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetTestOrderDetail(Guid id, CancellationToken ct)
         {
             var query = new GetTestOrderDetailQuery(id);
             var result = await _sender.Send(query, ct);
 
             return Ok(ApiResponse<TestOrderDetailDto>.Success(result));
-        }
-
-        private bool TryGetUserId(out Guid userId)
-        {
-            var userIdValue = Request.Headers.TryGetValue("X-User-Id", out var headerValue)
-                ? headerValue.ToString()
-                : User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            return Guid.TryParse(userIdValue, out userId);
         }
     }
 }

@@ -31,6 +31,8 @@ namespace TestOrderService.Domain.Entities
 
         // Patient's signs.
         public string? TestOrderDescription { get; set; }
+
+        public List<Comment> Comments { get; set; } = [];
     }
 
     public enum StatusTestOrder { Pending, Completed, Rejected }

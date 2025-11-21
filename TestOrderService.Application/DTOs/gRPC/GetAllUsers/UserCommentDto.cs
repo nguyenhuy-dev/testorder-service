@@ -1,6 +1,6 @@
 ﻿namespace TestOrderService.Application.DTOs.gRPC.GetAllUsers
 {
-    public class UserDto
+    public class UserCommentDto
     {
         /// <summary>
         ///     Gets or sets the user identifier.
@@ -11,17 +11,11 @@
         ///     Gets or sets the full name.
         /// </summary>
         public string FullName { get; set; } = string.Empty;
-
-        /// <summary>
-        ///     Gets or sets the email.
-        /// </summary>
-        public string Email { get; set; } = string.Empty;
+        public string RoleName { get; set; } = string.Empty;
 
         /// <summary>
         ///     Gets or sets a value indicating whether this user is active.
         /// </summary>
         public bool IsActive { get; set; }
-
-        public RoleDto Role { get; set; } = default!;
     }
 }
