@@ -14,4 +14,3 @@ namespace TestOrderService.Application.IntegrationEvents
         public DateTime? RunAt { get; set; }
     }
 }
-

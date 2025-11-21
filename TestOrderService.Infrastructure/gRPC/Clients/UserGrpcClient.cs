@@ -37,7 +37,12 @@ namespace TestOrderService.Infrastructure.gRPC.Clients
                             UserId = userId,
                             FullName = u.FullName ?? string.Empty,
                             Email = u.Email ?? string.Empty,
-                            IsActive = u.IsActive
+                            IsActive = u.IsActive,
+                            Role = new RoleDto
+                            {
+                                RoleId = u.Role.RoleId,
+                                RoleName = u.Role.RoleName
+                            }
                         };
                     }
                     catch
@@ -49,6 +54,44 @@ namespace TestOrderService.Infrastructure.gRPC.Clients
                 .ToList();
 
             return users!;
+        }
+
+        public async Task<UserDto?> GetUserById(Guid userId, CancellationToken cancellation)
+        {
+            var response = await _userClient.GetAllUsersAsync(new GetAllUsersRequest(), cancellationToken: cancellation);
+
+            var user = response.Users
+                .Select(u =>
+                {
+                    try
+                    {
+                        // Parse required fields
+                        if (!Guid.TryParse(u.UserId, out var userId))
+                        {
+                            return null; // Return null for invalid records
+                        }
+
+                        return new UserDto
+                        {
+                            UserId = userId,
+                            FullName = u.FullName ?? string.Empty,
+                            Email = u.Email ?? string.Empty,
+                            IsActive = u.IsActive,
+                            Role = new RoleDto
+                            {
+                                RoleId = u.Role.RoleId,
+                                RoleName = u.Role.RoleName
+                            }
+                        };
+                    }
+                    catch
+                    {
+                        return null; // Skip invalid records
+                    }
+                })
+                .FirstOrDefault(u => u != null && u.UserId == userId); // Filter out nulls
+
+            return user;
         }
     }
 }

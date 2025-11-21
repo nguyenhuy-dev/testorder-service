@@ -61,6 +61,7 @@ namespace TestOrderService.Infrastructure.Repositories
         public async Task<TestOrder?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _dbContext.TestOrders
+                .Include(t => t.Comments)
                 .FirstOrDefaultAsync(t => t.TestOrderId == id, cancellationToken);
         }
 

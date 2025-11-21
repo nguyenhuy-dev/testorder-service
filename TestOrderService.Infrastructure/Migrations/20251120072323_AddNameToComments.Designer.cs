@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TestOrderService.Infrastructure.Data;
@@ -11,9 +12,11 @@ using TestOrderService.Infrastructure.Data;
 namespace TestOrderService.Infrastructure.Migrations
 {
     [DbContext(typeof(TestOrderServiceDbContext))]
-    partial class TestOrderServiceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251120072323_AddNameToComments")]
+    partial class AddNameToComments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

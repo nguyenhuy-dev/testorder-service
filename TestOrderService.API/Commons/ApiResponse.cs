@@ -4,7 +4,7 @@
     ///     Api response template.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class ApiResponse<T> where T : class
+    public class ApiResponse<T>
     {
         /// <summary>
         ///     Gets or sets the status code.

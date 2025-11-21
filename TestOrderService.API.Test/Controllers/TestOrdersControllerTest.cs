@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using NSubstitute;
 using System.Security.Claims;
 using TestOrderService.API.Commons;
 using TestOrderService.API.Controllers;
@@ -13,7 +14,9 @@ using TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder;
 using TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
+using TestOrderService.Application.Interfaces.gRPC;
 using TestOrderService.Domain.Entities;
+using UnauthorizedAccessException=TestOrderService.Application.Exceptions.UnauthorizedAccessException;
 namespace TestOrderService.API.Test.Controllers
 {
     [TestFixture]
@@ -24,10 +27,12 @@ namespace TestOrderService.API.Test.Controllers
         public void Setup()
         {
             _mockSender = new Mock<ISender>();
-            _controller = new TestOrdersController(_mockSender.Object);
+            _userGrpcClient = Substitute.For<IUserGrpcClient>();
+            _controller = new TestOrdersController(_mockSender.Object, _userGrpcClient);
         }
         private Mock<ISender> _mockSender = null!;
         private TestOrdersController _controller = null!;
+        private IUserGrpcClient _userGrpcClient;
 
         private static GetTestOrdersRequest CreateValidGetTestOrdersRequest()
         {
@@ -477,7 +482,7 @@ namespace TestOrderService.API.Test.Controllers
         }
 
         [Test]
-        public async Task UpdateTestOrder_ShouldReturnUnauthorized_WhenUserIdIsInvalid()
+        public void UpdateTestOrder_ShouldThrow_WhenUserIdIsInvalid()
         {
             // Arrange
             var testOrderId = Guid.NewGuid();
@@ -488,28 +493,22 @@ namespace TestOrderService.API.Test.Controllers
                 StatusTestOrder.Completed
             );
 
-            // Setup controller context without user ID
+            // Setup controller context without user ID (Simulating missing/invalid token)
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext()
             };
 
-            // Act
-            var actionResult = await _controller.UpdateTestOrder(testOrderId, updateDto, CancellationToken.None);
+            // Act & Assert
+            // We use Assert.ThrowsAsync because the BaseApiController is designed to throw
+            // when the ID is missing.
+            var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+                await _controller.UpdateTestOrder(testOrderId, updateDto, CancellationToken.None));
 
-            // Assert
-            var unauthorizedResult = actionResult as UnauthorizedObjectResult;
-            Assert.That(unauthorizedResult, Is.Not.Null);
-            Assert.That(unauthorizedResult!.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized));
+            // Verify the message matches what you wrote in BaseApiController
+            Assert.That(ex!.Message, Is.EqualTo("Authentication token is missing or invalid."));
 
-            var errorResponse = unauthorizedResult.Value as ErrorResponse;
-            Assert.Multiple(() =>
-            {
-                Assert.That(errorResponse, Is.Not.Null);
-                Assert.That(errorResponse!.StatusCode, Is.EqualTo(401));
-                Assert.That(errorResponse.Message, Is.EqualTo("Invalid user identifier."));
-            });
-
+            // Verify the Mediator was never called
             _mockSender.Verify(s => s.Send(It.IsAny<IRequest<TestOrder>>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
@@ -856,12 +855,14 @@ namespace TestOrderService.API.Test.Controllers
             var dto = new CreateTestOrderDto(null);
 
             // Act + Assert
-            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            // UPDATE 1: Expect the custom UnauthorizedAccessException instead of InvalidOperationException
+            var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
                 await _controller.CreateTestOrder(patientId, dto, CancellationToken.None));
 
+            // UPDATE 2: Expect the message defined in your BaseApiController
             Assert.That(
                 ex!.Message,
-                Does.Contain("Can't parse 'createById' to Guid")
+                Does.Contain("Authentication token is missing or invalid")
             );
 
             _mockSender.Verify(s => s.Send(It.IsAny<CreateTestOrderCommand>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -880,12 +881,14 @@ namespace TestOrderService.API.Test.Controllers
             var dto = new CreateTestOrderDto(null);
 
             // Act + Assert
-            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            // UPDATE 1: Expect the custom UnauthorizedAccessException instead of InvalidOperationException
+            var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
                 await _controller.CreateTestOrder(patientId, dto, CancellationToken.None));
 
+            // UPDATE 2: Expect the message defined in your BaseApiController
             Assert.That(
                 ex!.Message,
-                Does.Contain("Can't parse 'createById' to Guid")
+                Does.Contain("Authentication token is missing or invalid")
             );
 
             _mockSender.Verify(s => s.Send(It.IsAny<CreateTestOrderCommand>(), It.IsAny<CancellationToken>()), Times.Never);

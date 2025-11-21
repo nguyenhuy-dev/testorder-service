@@ -133,38 +133,4 @@
         /// </value>
         public List<CommentDto> Comments { get; set; } = new List<CommentDto>();
     }
-
-    /// <summary>
-    /// </summary>
-    public class CommentDto
-    {
-        /// <summary>
-        ///     Gets or sets the comment identifier.
-        /// </summary>
-        /// <value>
-        ///     The comment identifier.
-        /// </value>
-        public Guid CommentId { get; set; }
-        /// <summary>
-        ///     Gets or sets the content.
-        /// </summary>
-        /// <value>
-        ///     The content.
-        /// </value>
-        public string Content { get; set; } = string.Empty;
-        /// <summary>
-        ///     Gets or sets the created by.
-        /// </summary>
-        /// <value>
-        ///     The created by.
-        /// </value>
-        public string CreatedBy { get; set; } = string.Empty;
-        /// <summary>
-        ///     Gets or sets the create at.
-        /// </summary>
-        /// <value>
-        ///     The create at.
-        /// </value>
-        public DateTime CreateAt { get; set; }
-    }
 }
