@@ -2,6 +2,7 @@ using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TestOrderService.API.Commons;
 using TestOrderService.API.Middleware;
 using TestOrderService.Application.DTOs;
@@ -30,19 +31,23 @@ namespace TestOrderService.API.Controllers
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Can't parse '{nameof(createById)}' to Guid: {createById}.</exception>
-        [HttpPost("{patientId}")]
+        [HttpPost]
         [Authorize(Policy = "create_test_order")]
         [ProducesResponseType(typeof(ApiResponse<TestOrder>), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> CreateTestOrder(Guid patientId, [FromBody] CreateTestOrderDto createTestOrderDto, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateTestOrder([FromBody] CreateTestOrderDto createTestOrderDto, CancellationToken cancellationToken = default)
         {
             var testOrderCommand = createTestOrderDto.Adapt<CreateTestOrderCommand>();
 
-            // Using BaseApiController helper property
-            testOrderCommand.CreateById = CurrentUserId;
-            testOrderCommand.PatientId = patientId;
+            var createById = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(createById, out var createByIdGuid))
+                throw new InvalidOperationException($"Can't parse '{nameof(createById)}' to Guid: {createById}.");
+            testOrderCommand.CreateById = createByIdGuid;
+
+            testOrderCommand.PatientId = createTestOrderDto.PatientId;
+            testOrderCommand.TestOrderDescription = createTestOrderDto.TestOrderDescription;
 
             var testOrder = await _sender.Send(testOrderCommand, cancellationToken);
 

@@ -18,6 +18,8 @@ namespace TestOrderService.API.Middleware.Authentication
         ILoggerFactory loggerFactory,
         UrlEncoder encoder) : AuthenticationHandler<LabAuthenticationSchemeOptions>(options, loggerFactory, encoder)
     {
+
+        private const string AUTH_STATUS = "AuthResultStatus";
         /// <summary>
         ///     The logger
         /// </summary>
@@ -37,7 +39,7 @@ namespace TestOrderService.API.Middleware.Authentication
             if (IsPassPath(path))
             {
                 _logger.LogInformation("No authentication with passing path.");
-                Context.Items["AuthResultStatus"] = "NoResult";
+                Context.Items[AUTH_STATUS] = "NoResult";
                 return Task.FromResult(AuthenticateResult.NoResult());
             }
 
@@ -46,14 +48,14 @@ namespace TestOrderService.API.Middleware.Authentication
             var requiresAuth = endpoints?.Metadata.GetMetadata<IAuthorizeData>() != null;
             if (!requiresAuth)
             {
-                Context.Items["AuthResultStatus"] = "NoResult";
+                Context.Items[AUTH_STATUS] = "NoResult";
                 return Task.FromResult(AuthenticateResult.NoResult());
             }
 
             var authorizationHeaders = Context.Request.Headers.Authorization;
             if (authorizationHeaders.Count == 0)
             {
-                Context.Items["AuthResultStatus"] = "Fail";
+                Context.Items[AUTH_STATUS] = "Fail";
                 Context.Items["AuthResultMessage"] = "Authorization header is missing.";
                 return Task.FromResult(AuthenticateResult.Fail("Authorization header is missing."));
             }
@@ -67,7 +69,7 @@ namespace TestOrderService.API.Middleware.Authentication
                 return Task.FromResult(AuthenticateResult.Success(ticket));
             }
 
-            Context.Items["AuthResultStatus"] = "Fail";
+            Context.Items[AUTH_STATUS] = "Fail";
             Context.Items["AuthResultMessage"] = "Verify token unsuccessfully.";
             return Task.FromResult(AuthenticateResult.Fail("Verify token unsuccessfully."));
         }
@@ -102,7 +104,6 @@ namespace TestOrderService.API.Middleware.Authentication
             }
             catch (Exception ex)
             {
-                _logger.LogError("Token validation failed.");
                 _logger.LogError(ex, ex.Message);
 
                 claimsPrincipal = null;
