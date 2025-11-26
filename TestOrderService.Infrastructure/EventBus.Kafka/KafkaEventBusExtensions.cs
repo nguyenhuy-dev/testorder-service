@@ -45,6 +45,36 @@ namespace TestOrderService.Infrastructure.EventBus.Kafka
                 services.GetRequiredService<ILoggerFactory>().CreateLogger($"EventPublisher<{topic}>"))
             );
         }
+
+        public static IHostApplicationBuilder AddKafkaMessageEnvelopConsumer(this IHostApplicationBuilder builder, string groupId, string connectionName = "kafka")
+        {
+            builder.AddKafkaConsumer<string, MessageEnvelop>(connectionName,
+                settings =>
+                {
+                    settings.Config.GroupId = groupId;
+                    settings.Config.AutoOffsetReset = AutoOffsetReset.Earliest;
+                },
+                builder =>
+                {
+                    builder.SetValueDeserializer(new MessageEnvelopDeserializer());
+                }
+            );
+
+            return builder;
+        }
+
+        public static IHostApplicationBuilder AddKafkaEventConsumer(this IHostApplicationBuilder builder, Action<EventHandlingWorkerOptions>? configureOptions = null, string connectionName = "kafka")
+        {
+            var options = new EventHandlingWorkerOptions();
+            configureOptions?.Invoke(options);
+
+            builder.AddKafkaMessageEnvelopConsumer(options.KafkaGroupId, connectionName);
+            builder.Services.AddSingleton(options);
+            builder.Services.AddSingleton(services => options.IntegrationEventFactory);
+            builder.Services.AddHostedService<EventHandlingService>();
+
+            return builder;
+        }
     }
 
     /// <summary>
@@ -64,6 +94,14 @@ namespace TestOrderService.Infrastructure.EventBus.Kafka
         public byte[] Serialize(MessageEnvelop data, SerializationContext context)
         {
             return JsonSerializer.SerializeToUtf8Bytes(data);
+        }
+    }
+
+    internal class MessageEnvelopDeserializer : IDeserializer<MessageEnvelop>
+    {
+        public MessageEnvelop Deserialize(ReadOnlySpan<byte> data, bool isNull, SerializationContext context)
+        {
+            return JsonSerializer.Deserialize<MessageEnvelop>(data) ?? throw new InvalidOperationException("Error deserialize data.");
         }
     }
 }

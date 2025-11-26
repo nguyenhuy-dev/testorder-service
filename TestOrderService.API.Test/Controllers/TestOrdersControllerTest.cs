@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using NSubstitute;
 using System.Security.Claims;
 using TestOrderService.API.Commons;
 using TestOrderService.API.Controllers;
@@ -13,7 +12,6 @@ using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
-using TestOrderService.Application.Interfaces.gRPC;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Test.Controllers
 {
@@ -25,12 +23,10 @@ namespace TestOrderService.API.Test.Controllers
         public void Setup()
         {
             _mockSender = new Mock<ISender>();
-            _userGrpcClient = Substitute.For<IUserGrpcClient>();
-            _controller = new TestOrdersController(_mockSender.Object, _userGrpcClient);
+            _controller = new TestOrdersController(_mockSender.Object);
         }
         private Mock<ISender> _mockSender = null!;
         private TestOrdersController _controller = null!;
-        private IUserGrpcClient _userGrpcClient;
 
         private static GetTestOrdersRequest CreateValidGetTestOrdersRequest()
         {
@@ -286,7 +282,7 @@ namespace TestOrderService.API.Test.Controllers
             {
                 PageNumber = 3,
                 PageSize = 15,
-                Status = StatusTestOrder.Rejected
+                Status = StatusTestOrder.Cancelled
             };
 
             var result = CreateValidPaginatedTestOrders();
@@ -308,7 +304,7 @@ namespace TestOrderService.API.Test.Controllers
                 Assert.That(capturedQuery, Is.Not.Null);
                 Assert.That(capturedQuery!.Request.PageNumber, Is.EqualTo(3));
                 Assert.That(capturedQuery.Request.PageSize, Is.EqualTo(15));
-                Assert.That(capturedQuery.Request.Status, Is.EqualTo(StatusTestOrder.Rejected));
+                Assert.That(capturedQuery.Request.Status, Is.EqualTo(StatusTestOrder.Cancelled));
             });
 
             _mockSender.Verify(s => s.Send(It.IsAny<GetTestOrdersQuery>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -532,11 +528,21 @@ namespace TestOrderService.API.Test.Controllers
             var created = result as ObjectResult;
             Assert.That(created, Is.Not.Null);
             Assert.That(created!.StatusCode, Is.EqualTo(StatusCodes.Status201Created));
-            Assert.That(created.Value, Is.EqualTo(expected));
+
+            // So sánh property của ApiResponse
+            var apiResponse = created.Value as ApiResponse<TestOrder>;
+            Assert.That(apiResponse, Is.Not.Null);
+            Assert.That(apiResponse!.StatusCode, Is.EqualTo(StatusCodes.Status201Created));
+            Assert.That(apiResponse.Message, Is.EqualTo("Create test order successfully"));
+            Assert.That(apiResponse.Data, Is.Not.Null);
+            Assert.That(apiResponse.Data.TestOrderId, Is.EqualTo(expected.TestOrderId));
+            Assert.That(apiResponse.Data.PatientId, Is.EqualTo(expected.PatientId));
 
             // Validate mapped command
             Assert.That(capturedCmd, Is.Not.Null);
-            Assert.That(capturedCmd.CreateById.ToString(), Is.EqualTo(createById));
+            Assert.That(capturedCmd!.CreateById.ToString(), Is.EqualTo(createById));
+            Assert.That(capturedCmd.PatientId, Is.EqualTo(dto.PatientId));
+            Assert.That(capturedCmd.TestOrderDescription, Is.EqualTo(dto.TestOrderDescription));
         }
 
         // ---------------------------------------------------------

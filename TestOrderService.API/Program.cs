@@ -13,11 +13,11 @@ using TestOrderService.API.gRPC.Services;
 using TestOrderService.API.Middleware;
 using TestOrderService.API.Middleware.Authentication;
 using TestOrderService.API.Middleware.Authorization;
-using TestOrderService.Application;
 using TestOrderService.Application.Behaviors;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.EventBus;
 using TestOrderService.Application.Interfaces.gRPC;
+using TestOrderService.Infrastructure;
 using TestOrderService.Infrastructure.Data;
 using TestOrderService.Infrastructure.EventBus;
 using TestOrderService.Infrastructure.EventBus.Kafka;
@@ -46,11 +46,13 @@ builder.Services.AddDbContext<TestOrderServiceDbContext>(options => options.UseN
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ITestOrderRepository, TestOrderRepository>();
+builder.Services.AddScoped<ITestResultRepository, TestResultRepository>();
 
-var applicationAssembly = typeof(IAssemblyReference).Assembly;
+var infrastructureAssembly = typeof(IAssemblyReference).Assembly;
+var applicationAssembly = typeof(TestOrderService.Application.IAssemblyReference).Assembly;
 builder.Services.AddMediatR(cfg =>
     {
-        cfg.RegisterServicesFromAssemblies(applicationAssembly);
+        cfg.RegisterServicesFromAssemblies(applicationAssembly, infrastructureAssembly);
         cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
     }
 );
@@ -99,6 +101,21 @@ if (!string.IsNullOrEmpty(kafkaTopic))
     builder.AddKafkaEventPublisher(kafkaTopic);
 else
     builder.Services.AddTransient<IEventPublisher, NullEventPublisher>();
+
+var eventConsumingTopics = builder.Configuration["EVENT_CONSUMING_TOPICS"];
+if (!string.IsNullOrEmpty(eventConsumingTopics))
+{
+    builder.AddKafkaEventConsumer(options =>
+        {
+            options.ServiceName = "TestOrderService";
+            options.KafkaGroupId = "test-order";
+            options.Topics.AddRange(eventConsumingTopics.Split(','));
+            options.IntegrationEventFactory = IntegrationEventFactory.Instance;
+        }
+    );
+}
+else
+    throw new InvalidOperationException("'EVENT_CONSUMING_TOPICS' cant be null.");
 
 builder.Services.AddAuthentication("JwtBearer")
     .AddScheme<LabAuthenticationSchemeOptions, LabAuthenticationHandler>("JwtBearer", configureOptions =>
