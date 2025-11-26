@@ -13,12 +13,17 @@ namespace TestOrderService.API.Middleware.Authentication
     /// </summary>
     /// <seealso
     ///     cref="Microsoft.AspNetCore.Authentication.AuthenticationHandler&lt;TestOrderService.API.Middleware.Authentication.LabAuthenticationSchemeOptions&gt;" />
+    /// <seealso
+    ///     cref="Microsoft.AspNetCore.Authentication.AuthenticationHandler&lt;TestOrderService.API.Middleware.Authentication.LabAuthenticationSchemeOptions&gt;" />
     public class LabAuthenticationHandler(
         IOptionsMonitor<LabAuthenticationSchemeOptions> options,
         ILoggerFactory loggerFactory,
         UrlEncoder encoder) : AuthenticationHandler<LabAuthenticationSchemeOptions>(options, loggerFactory, encoder)
     {
 
+        /// <summary>
+        ///     The authentication status
+        /// </summary>
         private const string AUTH_STATUS = "AuthResultStatus";
         /// <summary>
         ///     The logger

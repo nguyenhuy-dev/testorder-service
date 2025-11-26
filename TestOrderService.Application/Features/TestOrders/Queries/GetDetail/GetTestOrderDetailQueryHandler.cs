@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Mapster;
+﻿using Mapster;
 using MediatR;
 using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Exceptions;
@@ -14,8 +13,6 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
     public class GetTestOrderDetailQueryHandler
         : IRequestHandler<GetTestOrderDetailQuery, TestOrderDetailDto>
     {
-
-        private readonly IMapper _mapper;
         /// <summary>
         ///     The patient GRPC
         /// </summary>
@@ -56,16 +53,16 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
         ///     or
         ///     Patient with id '{t.PatientId}' was not found.
         /// </exception>
-        public async Task<TestOrderDetailDto> Handle(GetTestOrderDetailQuery req, CancellationToken ct)
+        public async Task<TestOrderDetailDto> Handle(GetTestOrderDetailQuery req, CancellationToken cancellationToken)
         {
-            var t = await _repo.GetByIdAsync(req.TestOrderId, ct)
+            var t = await _repo.GetByIdAsync(req.TestOrderId, cancellationToken)
                  ?? throw new NotFoundException($"TestOrder with id '{req.TestOrderId}' was not found.");
 
-            var patients = await _patientGrpc.GetAllPatients(ct);
+            var patients = await _patientGrpc.GetAllPatients(cancellationToken);
             var patient = patients.FirstOrDefault(x => x.PatientId == t.PatientId)
                        ?? throw new NotFoundException($"Patient with id '{t.PatientId}' was not found.");
 
-            var users = await _userGrpc.GetAllUsers(ct);
+            var users = await _userGrpc.GetAllUsers(cancellationToken);
 
             var createdBy = users.FirstOrDefault(u => u.UserId == t.CreateById)?.FullName ?? "Unknown";
             var runBy = users.FirstOrDefault(u => u.UserId == t.RunById)?.FullName;

@@ -11,7 +11,6 @@ using TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder;
 using TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
-using TestOrderService.Application.Interfaces.gRPC;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Controllers
 {
@@ -19,7 +18,7 @@ namespace TestOrderService.API.Controllers
     ///     Test orders apis.
     /// </summary>
     [Route("api/[controller]")]
-    public class TestOrdersController(ISender sender, IUserGrpcClient userGrpcClient) : BaseApiController
+    public class TestOrdersController(ISender sender) : BaseApiController
     {
         private readonly ISender _sender = sender;
 
@@ -51,7 +50,14 @@ namespace TestOrderService.API.Controllers
 
             var testOrder = await _sender.Send(testOrderCommand, cancellationToken);
 
-            return StatusCode(StatusCodes.Status201Created, testOrder);
+            var response = new ApiResponse<TestOrder>
+            {
+                StatusCode = StatusCodes.Status201Created,
+                Message = "Create test order successfully",
+                Data = testOrder
+            };
+
+            return StatusCode(StatusCodes.Status201Created, response);
         }
 
         /// <summary>

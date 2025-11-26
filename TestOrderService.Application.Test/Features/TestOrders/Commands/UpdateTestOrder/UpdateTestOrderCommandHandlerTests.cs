@@ -475,7 +475,7 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Commands.UpdateT
             var runAt = DateTime.UtcNow;
             var updateAt = DateTime.UtcNow;
             var newDescription = "Updated description";
-            var newStatus = StatusTestOrder.Rejected;
+            var newStatus = StatusTestOrder.Cancelled;
 
             var existingTestOrder = new TestOrder
             {

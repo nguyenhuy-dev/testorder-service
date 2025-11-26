@@ -94,7 +94,7 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Queries.GetTestO
         public void Status_CanBeSetAndRetrieved_Rejected()
         {
             // Arrange
-            var expectedValue = StatusTestOrder.Rejected;
+            var expectedValue = StatusTestOrder.Cancelled;
 
             // Act
             _request.Status = expectedValue;
@@ -167,7 +167,7 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Queries.GetTestO
             {
                 PageNumber = 4,
                 PageSize = 50,
-                Status = StatusTestOrder.Rejected
+                Status = StatusTestOrder.Cancelled
             };
 
             // Act
@@ -176,7 +176,7 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Queries.GetTestO
             // Assert
             Assert.That(query.Request.PageNumber, Is.EqualTo(4));
             Assert.That(query.Request.PageSize, Is.EqualTo(50));
-            Assert.That(query.Request.Status, Is.EqualTo(StatusTestOrder.Rejected));
+            Assert.That(query.Request.Status, Is.EqualTo(StatusTestOrder.Cancelled));
         }
     }
 }

@@ -33,7 +33,13 @@ namespace TestOrderService.Domain.Entities
         public string? TestOrderDescription { get; set; }
 
         public List<Comment> Comments { get; set; } = [];
+
+        public List<TestResult> TestResults { get; set; } = [];
     }
 
-    public enum StatusTestOrder { Pending, Completed, Rejected }
+    public enum StatusTestOrder
+    {
+        Pending, Completed, Cancelled,
+        Reviewed, AIReviewed
+    }
 }

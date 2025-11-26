@@ -27,6 +27,14 @@ namespace TestOrderService.Infrastructure.Data
         public DbSet<Comment> Comments { get; set; }
 
         /// <summary>
+        ///     Gets or sets the test results.
+        /// </summary>
+        /// <value>
+        ///     The test results.
+        /// </value>
+        public DbSet<TestResult> TestResults { get; set; }
+
+        /// <summary>
         ///     Override this method to further configure the model that was discovered by convention from the entity types
         ///     exposed in <see cref="T:Microsoft.EntityFrameworkCore.DbSet`1" /> properties on your derived context. The resulting
         ///     model may be cached
