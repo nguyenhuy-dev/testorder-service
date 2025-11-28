@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using TestOrderService.API.DTOs.AIReview;
 using TestOrderService.API.Services;
+using TestOrderService.Application.DTOs.AIReview;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Controllers

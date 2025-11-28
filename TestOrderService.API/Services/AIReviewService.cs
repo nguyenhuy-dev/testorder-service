@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.Json;
-using TestOrderService.API.DTOs.AIReview;
+using TestOrderService.Application.DTOs.AIReview;
 namespace TestOrderService.API.Services
 {
     public interface IAIReviewService

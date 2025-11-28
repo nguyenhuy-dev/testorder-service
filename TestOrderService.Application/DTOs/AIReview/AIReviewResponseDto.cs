@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-namespace TestOrderService.API.DTOs.AIReview
+namespace TestOrderService.Application.DTOs.AIReview
 {
 
     public class FlaggedParameterDto

@@ -45,6 +45,7 @@ builder.Services.AddDbContext<TestOrderServiceDbContext>(options => options.UseN
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<ITestResultCommentRepository, TestResultCommentRepository>();
 builder.Services.AddScoped<ITestOrderRepository, TestOrderRepository>();
 // builder.Services.AddScoped<ITestResultRepository, TestResultRepository>();
 

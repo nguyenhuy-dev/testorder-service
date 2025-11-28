@@ -28,6 +28,8 @@
 
         public string? TestResultDescription { get; set; }
 
+        public List<TestResultComment> TestResultComments { get; set; } = [];
+
         public TestOrder? TestOrder { get; set; }
     }
 

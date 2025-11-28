@@ -1,0 +1,81 @@
+using Mapster;
+using TestOrderService.Application.DTOs;
+using TestOrderService.Application.Exceptions;
+using TestOrderService.Application.Interfaces;
+using TestOrderService.Application.Interfaces.gRPC;
+using TestOrderService.Application.Interfaces.Message;
+using TestOrderService.Domain.Entities;
+using UnauthorizedAccessException=TestOrderService.Application.Exceptions.UnauthorizedAccessException;
+namespace TestOrderService.Application.Features.MedicalTestResults.Commands.UpdateTestResultComment
+{
+    /// <summary>
+    ///     Command handler for updating a test result comment
+    /// </summary>
+    /// <seealso cref="ICommandHandler{UpdateTestResultCommentCommand,TestResultCommentDto}" />
+    public class UpdateTestResultCommentCommandHandler(
+        ITestResultCommentRepository testResultCommentRepository,
+        IUnitOfWork unitOfWork,
+        IUserGrpcClient userGrpcClient) : ICommandHandler<UpdateTestResultCommentCommand, TestResultCommentDto>
+    {
+        /// <summary>
+        ///     The test result comment repository
+        /// </summary>
+        private readonly ITestResultCommentRepository _testResultCommentRepository = testResultCommentRepository;
+
+        /// <summary>
+        ///     The unit of work
+        /// </summary>
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
+
+        /// <summary>
+        ///     The user gRPC client
+        /// </summary>
+        private readonly IUserGrpcClient _userGrpcClient = userGrpcClient;
+
+        /// <summary>
+        ///     Handles the specified request.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException">Thrown when test result comment not found</exception>
+        /// <exception cref="UnauthorizedAccessException">Thrown when user not found in IAM service</exception>
+        /// <exception cref="ForbiddenException">Thrown when user lacks permission</exception>
+        public async Task<TestResultCommentDto> Handle(
+            UpdateTestResultCommentCommand request,
+            CancellationToken cancellationToken)
+        {
+            // Find comment by ID and test result ID
+            var comment = await _testResultCommentRepository.GetTestResultCommentByIdAndTestResultIdAsync(
+                request.CommentId,
+                request.TestResultId,
+                cancellationToken);
+
+            if (comment == null)
+            {
+                throw new NotFoundException(nameof(TestResultComment), request.CommentId);
+            }
+
+            // Check if not owner
+            if (request.UserId != comment.CreateById)
+            {
+                throw new UnauthorizedAccessException("User cannot update other user's comments");
+            }
+
+            // Update comment properties
+            comment.Content = request.Content;
+            comment.UpdateById = request.UserId;
+            comment.UpdateByName = request.Name;
+            comment.UpdateAt = DateTime.UtcNow;
+
+            // Save changes to database
+            await _testResultCommentRepository.UpdateTestResultCommentAsync(comment, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Map to response and add user names
+            var response = comment.Adapt<TestResultCommentDto>();
+
+            return response;
+        }
+    }
+}

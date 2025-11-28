@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TestOrderService.API.Controllers;
-using TestOrderService.API.DTOs.AIReview;
 using TestOrderService.API.Services;
+using TestOrderService.Application.DTOs.AIReview;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Test.Controllers
