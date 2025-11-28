@@ -1,4 +1,4 @@
-namespace TestOrderService.API.DTOs.AIReview
+namespace TestOrderService.Application.DTOs.AIReview
 {
     public class AIReviewRequestDto
     {

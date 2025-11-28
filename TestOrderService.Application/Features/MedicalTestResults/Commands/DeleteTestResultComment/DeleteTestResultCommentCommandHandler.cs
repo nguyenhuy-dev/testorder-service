@@ -1,0 +1,70 @@
+using TestOrderService.Application.Exceptions;
+using TestOrderService.Application.Interfaces;
+using TestOrderService.Application.Interfaces.gRPC;
+using TestOrderService.Application.Interfaces.Message;
+using TestOrderService.Domain.Entities;
+using UnauthorizedAccessException=TestOrderService.Application.Exceptions.UnauthorizedAccessException;
+namespace TestOrderService.Application.Features.MedicalTestResults.Commands.DeleteTestResultComment
+{
+    /// <summary>
+    ///     Command handler for deleting a test result comment
+    /// </summary>
+    /// <seealso cref="ICommandHandler{DeleteTestResultCommentCommand,}" />
+    public class DeleteTestResultCommentCommandHandler(
+        ITestResultCommentRepository testResultCommentRepository,
+        IUnitOfWork unitOfWork,
+        IUserGrpcClient userGrpcClient) : ICommandHandler<DeleteTestResultCommentCommand, bool>
+    {
+        /// <summary>
+        ///     The test result comment repository
+        /// </summary>
+        private readonly ITestResultCommentRepository _testResultCommentRepository = testResultCommentRepository;
+
+        /// <summary>
+        ///     The unit of work
+        /// </summary>
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
+
+        /// <summary>
+        ///     The user gRPC client
+        /// </summary>
+        private readonly IUserGrpcClient _userGrpcClient = userGrpcClient;
+
+        /// <summary>
+        ///     Handles the specified request.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException">Thrown when test result comment not found</exception>
+        /// <exception cref="UnauthorizedAccessException">Thrown when user not found in IAM service</exception>
+        /// <exception cref="ForbiddenException">Thrown when user lacks permission</exception>
+        public async Task<bool> Handle(
+            DeleteTestResultCommentCommand request,
+            CancellationToken cancellationToken)
+        {
+            // Find comment by ID and test result ID
+            var comment = await _testResultCommentRepository.GetTestResultCommentByIdAndTestResultIdAsync(
+                request.CommentId,
+                request.TestResultId,
+                cancellationToken);
+
+            if (comment == null)
+            {
+                throw new NotFoundException(nameof(TestResultComment), request.CommentId);
+            }
+
+            // Check if not admin and not owner
+            if (request.Role != "admin" && request.UserId != comment.CreateById)
+            {
+                throw new UnauthorizedAccessException("User cannot delete other user's comments");
+            }
+
+            // Delete comment from database
+            await _testResultCommentRepository.DeleteTestResultCommentAsync(comment, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return true;
+        }
+    }
+}
