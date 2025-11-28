@@ -13,6 +13,7 @@ using TestOrderService.API.gRPC.Services;
 using TestOrderService.API.Middleware;
 using TestOrderService.API.Middleware.Authentication;
 using TestOrderService.API.Middleware.Authorization;
+using TestOrderService.API.Services;
 using TestOrderService.Application.Behaviors;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.EventBus;
@@ -20,7 +21,6 @@ using TestOrderService.Application.Interfaces.gRPC;
 using TestOrderService.Infrastructure;
 using TestOrderService.Infrastructure.Data;
 using TestOrderService.Infrastructure.EventBus;
-using TestOrderService.Infrastructure.EventBus.Kafka;
 using TestOrderService.Infrastructure.gRPC.Clients;
 using TestOrderService.Infrastructure.Repositories;
 using TestOrderService.Infrastructure.Services;
@@ -46,13 +46,13 @@ builder.Services.AddDbContext<TestOrderServiceDbContext>(options => options.UseN
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ITestOrderRepository, TestOrderRepository>();
-builder.Services.AddScoped<ITestResultRepository, TestResultRepository>();
+// builder.Services.AddScoped<ITestResultRepository, TestResultRepository>();
 
 var infrastructureAssembly = typeof(IAssemblyReference).Assembly;
 var applicationAssembly = typeof(TestOrderService.Application.IAssemblyReference).Assembly;
 builder.Services.AddMediatR(cfg =>
     {
-        cfg.RegisterServicesFromAssemblies(applicationAssembly, infrastructureAssembly);
+        cfg.RegisterServicesFromAssemblies(applicationAssembly); // , infrastructureAssembly
         cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
     }
 );
@@ -84,6 +84,9 @@ builder.Services.AddGrpcClient<Privilege.PrivilegeClient>(o =>
 );
 builder.Services.AddScoped<IPrivilegeGrpcClient, PrivilegeGrpcClient>();
 
+// Register AI Review Service
+builder.Services.AddHttpClient<IAIReviewService, AIReviewService>();
+
 builder.Services.AddGrpc();
 
 builder.Services.AddCors(options =>
@@ -95,24 +98,25 @@ builder.Services.AddCors(options =>
             .AllowCredentials());
 });
 
-builder.AddKafkaProducer("kafka");
+// builder.AddKafkaProducer("kafka");
 var kafkaTopic = builder.Configuration["EVENT_PUBLISHING_TOPICS"];
 if (!string.IsNullOrEmpty(kafkaTopic))
-    builder.AddKafkaEventPublisher(kafkaTopic);
+    // builder.AddKafkaEventPublisher(kafkaTopic);
+    builder.Services.AddTransient<IEventPublisher, NullEventPublisher>();
 else
     builder.Services.AddTransient<IEventPublisher, NullEventPublisher>();
 
 var eventConsumingTopics = builder.Configuration["EVENT_CONSUMING_TOPICS"];
 if (!string.IsNullOrEmpty(eventConsumingTopics))
 {
-    builder.AddKafkaEventConsumer(options =>
-        {
-            options.ServiceName = "TestOrderService";
-            options.KafkaGroupId = "test-order";
-            options.Topics.AddRange(eventConsumingTopics.Split(','));
-            options.IntegrationEventFactory = IntegrationEventFactory.Instance;
-        }
-    );
+    // builder.AddKafkaEventConsumer(options =>
+    //     {
+    //         options.ServiceName = "TestOrderService";
+    //         options.KafkaGroupId = "test-order";
+    //         options.Topics.AddRange(eventConsumingTopics.Split(','));
+    //         options.IntegrationEventFactory = IntegrationEventFactory.Instance;
+    //     }
+    // );
 }
 else
     throw new InvalidOperationException("'EVENT_CONSUMING_TOPICS' cant be null.");
@@ -152,6 +156,6 @@ app.MapControllers();
 
 app.MapGrpcService<TestOrderGrpcService>();
 
-await app.MigrateDbContextAsync<TestOrderServiceDbContext>();
+// await app.MigrateDbContextAsync<TestOrderServiceDbContext>();
 
 await app.RunAsync();
