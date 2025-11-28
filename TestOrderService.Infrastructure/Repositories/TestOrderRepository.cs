@@ -62,6 +62,7 @@ namespace TestOrderService.Infrastructure.Repositories
         {
             return await _dbContext.TestOrders
                 .Include(t => t.Comments)
+                .Include(t => t.TestResults)
                 .FirstOrDefaultAsync(t => t.TestOrderId == id, cancellationToken);
         }
 
