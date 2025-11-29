@@ -26,6 +26,6 @@
         /// </summary>
         /// <param name="nameValue">The name value.</param>
         /// <param name="key">The key.</param>
-        public NotFoundException(string nameValue, object key) : base("Not Found", $"{nameValue} ({key} was not found).") { }
+        public NotFoundException(string key, object value) : base("Not Found", $"{key} {value} was not found.") { }
     }
 }

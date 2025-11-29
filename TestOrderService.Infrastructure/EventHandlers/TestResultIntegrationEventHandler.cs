@@ -9,26 +9,36 @@ namespace TestOrderService.Infrastructure.EventHandlers
     public class TestResultIntegrationEventHandler(
         ITestResultRepository testResultRepository,
         ILogger<TestResultIntegrationEventHandler> logger,
-        IUnitOfWork unitOfWork)
-        : INotificationEventHandler<TestResultCreatedIntegrationEvent>
+        IUnitOfWork unitOfWork,
+        ITestOrderRepository testOrderRepository)
+        : INotificationEventHandler<TestResultsCreatedIntegrationEvent>
     {
 
         private readonly ILogger<TestResultIntegrationEventHandler> _logger = logger;
+
+        private readonly ITestOrderRepository _testOrderRepository = testOrderRepository;
         private readonly ITestResultRepository _testResultRepository = testResultRepository;
 
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
-        public async Task Handle(TestResultCreatedIntegrationEvent request, CancellationToken cancellationToken)
+        public async Task Handle(TestResultsCreatedIntegrationEvent request, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Handling test result created event: 'TestResultId' {TestResultId}", request.TestResultId);
+            var testOrderId = request.TestOrderId;
 
-            var testResult = request.Adapt<TestResult>();
+            _logger.LogInformation("Handling test results created event: 'TestOrderId' {TestOrderId}", testOrderId);
 
-            await _testResultRepository.CreateTestResult(testResult, cancellationToken);
+            var testResults = request.TestResults.Select(t => t.Adapt<TestResult>());
+
+            foreach (var testResult in testResults)
+            {
+                await _testResultRepository.CreateTestResult(testResult, cancellationToken);
+            }
+
+            await _testOrderRepository.UpdateTestOrderToCompleted(testOrderId, cancellationToken);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Handling for creating test result successfully: 'TestResultId' {TestResultId}", request.TestResultId);
+            _logger.LogInformation("Handling for creating test result successfully: 'TestOrderId' {TestOrderId}", testOrderId);
         }
     }
 }

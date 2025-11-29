@@ -157,5 +157,19 @@ namespace TestOrderService.Infrastructure.Repositories
             // Return paginated result
             return new PaginatedList<TestOrderDto>(items, totalCount, page, pageSize);
         }
+
+        public async Task<TestOrder?> GetTestOrderByIdNotIncludeAsync(Guid id, CancellationToken cancellationToken)
+        {
+            return await _dbContext.TestOrders.FirstOrDefaultAsync(t => t.TestOrderId == id, cancellationToken);
+        }
+
+        public async Task<TestOrder> UpdateTestOrderToCompleted(Guid testOrderId, CancellationToken cancellationToken)
+        {
+            var testOrderQuery = _dbContext.TestOrders.Where(t => t.TestOrderId == testOrderId);
+            await testOrderQuery.ExecuteUpdateAsync(t =>
+                t.SetProperty(p => p.Status, StatusTestOrder.Completed), cancellationToken);
+
+            return await testOrderQuery.FirstAsync(cancellationToken);
+        }
     }
 }

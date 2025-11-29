@@ -41,5 +41,9 @@ namespace TestOrderService.Application.Interfaces
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         Task<PaginatedList<TestOrderDto>> GetTestOrdersAsync(GetTestOrdersRequest request, CancellationToken cancellationToken = default);
+
+        Task<TestOrder?> GetTestOrderByIdNotIncludeAsync(Guid id, CancellationToken cancellationToken);
+
+        Task<TestOrder> UpdateTestOrderToCompleted(Guid testOrderId, CancellationToken cancellationToken);
     }
 }

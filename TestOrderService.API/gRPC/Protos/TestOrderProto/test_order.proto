@@ -9,6 +9,12 @@ import "google/protobuf/wrappers.proto";
 
 service TestOrder {
     rpc GetAllTestOrders (Empty) returns (TestOrderListResponse);
+
+    rpc GetTestOrderById (TestOrderRequest) returns (TestOrderEntity);
+}
+
+message TestOrderRequest {
+    string TestOrderId = 1;
 }
 
 message Empty {}
