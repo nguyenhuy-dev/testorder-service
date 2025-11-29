@@ -5,6 +5,7 @@ using IAMService.API.gRPC.Protos.UserProto;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using MonitoringService.API.gRPC.Protos.TestDefinitionProto;
 using Patient_TestOrder_Service.API.gRPC.Protos.PatientProto;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
@@ -59,6 +60,18 @@ builder.Services.AddMediatR(cfg =>
     }
 );
 builder.Services.AddValidatorsFromAssembly(applicationAssembly);
+
+builder.Services.AddSingleton(provider =>
+{
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    var grpcAddress = configuration["MONITORING_GRPC_URL"] ?? "http://localhost:5249";
+
+    var channel = GrpcChannel.ForAddress(grpcAddress);
+
+    return new TestDefinition.TestDefinitionClient(channel);
+});
+
+builder.Services.AddScoped<ITestDefinitionGrpcClient, TestDefinitionGrpcClient>();
 
 // Register Patient gRPC client
 builder.Services.AddSingleton(provider =>

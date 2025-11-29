@@ -1,0 +1,27 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "MonitoringService.API.gRPC.Protos.TestDefinitionProto";
+
+package test_definition;
+
+import "google/protobuf/wrappers.proto";
+
+service TestDefinition {
+	rpc GetAllTestDefinitions (Empty) returns (TestDefinitionListResponse);
+}
+
+message Empty {}
+
+message TestDefinitionListResponse {
+	repeated TestDefinitionEntity TestDefinitions = 1;
+}
+
+message TestDefinitionEntity {
+	int32 TestDefinitionId = 1;
+	string TestName = 2;
+	string TestCode = 3;
+	string Unit = 4;
+	google.protobuf.BoolValue Gender = 5;
+	bool IsActive = 6;
+	google.protobuf.StringValue TestDefinitionDescription = 7;
+}

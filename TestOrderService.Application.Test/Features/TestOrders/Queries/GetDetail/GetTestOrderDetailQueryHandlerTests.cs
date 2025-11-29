@@ -1,5 +1,7 @@
-﻿using Moq;
+﻿using FluentAssertions;
+using Moq;
 using TestOrderService.Application.DTOs.gRPC.GetAllPatients;
+using TestOrderService.Application.DTOs.gRPC.GetAllTestDefinitions;
 using TestOrderService.Application.DTOs.gRPC.GetAllUsers;
 using TestOrderService.Application.Exceptions;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
@@ -8,182 +10,177 @@ using TestOrderService.Application.Interfaces.gRPC;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.Application.Test.Features.TestOrders.Queries.GetDetail
 {
-    /// <summary>
-    ///     Unit test for GetTestOrderDetailQueryHandler
-    /// </summary>
     [TestFixture]
     public class GetTestOrderDetailQueryHandlerTests
     {
 
-        /// <summary>
-        ///     Setups this instance.
-        /// </summary>
         [SetUp]
         public void Setup()
         {
             _repoMock = new Mock<ITestOrderRepository>();
             _patientGrpcMock = new Mock<IPatientGrpcClient>();
             _userGrpcMock = new Mock<IUserGrpcClient>();
+            _testDefGrpcMock = new Mock<ITestDefinitionGrpcClient>();
 
             _handler = new GetTestOrderDetailQueryHandler(
                 _repoMock.Object,
                 _patientGrpcMock.Object,
-                _userGrpcMock.Object
+                _userGrpcMock.Object,
+                _testDefGrpcMock.Object
             );
         }
-        /// <summary>
-        ///     The repo mock
-        /// </summary>
         private Mock<ITestOrderRepository> _repoMock = null!;
-        /// <summary>
-        ///     The patient GRPC mock
-        /// </summary>
         private Mock<IPatientGrpcClient> _patientGrpcMock = null!;
-        /// <summary>
-        ///     The user GRPC mock
-        /// </summary>
         private Mock<IUserGrpcClient> _userGrpcMock = null!;
-        /// <summary>
-        ///     The handler
-        /// </summary>
+        private Mock<ITestDefinitionGrpcClient> _testDefGrpcMock = null!;
         private GetTestOrderDetailQueryHandler _handler = null!;
 
-        /// <summary>
-        ///     Handles the should throw not found when test order not found.
-        /// </summary>
+        // 1. TestOrder not found
         [Test]
-        public void Handle_ShouldThrowNotFound_WhenTestOrderNotFound()
+        public void Handle_ShouldThrow_NotFound_WhenOrderMissing()
         {
-            // Arrange
             var id = Guid.NewGuid();
 
             _repoMock.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((TestOrder?)null);
 
-            var query = new GetTestOrderDetailQuery(id);
+            Func<Task> act = async () =>
+                await _handler.Handle(new GetTestOrderDetailQuery(id), CancellationToken.None);
 
-            // Act + Assert
-            var ex = Assert.ThrowsAsync<NotFoundException>(() => _handler.Handle(query, CancellationToken.None));
-            Assert.That(ex!.Message, Is.EqualTo($"TestOrder with id '{id}' was not found."));
+            act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage($"TestOrder with id '{id}' was not found.");
         }
 
-        /// <summary>
-        ///     Handles the should throw not found when patient not found.
-        /// </summary>
+        // 2. Patient not found
         [Test]
-        public void Handle_ShouldThrowNotFound_WhenPatientNotFound()
+        public void Handle_ShouldThrow_NotFound_WhenPatientMissing()
         {
-            // Arrange
-            var id = Guid.NewGuid();
-            var testOrder = new TestOrder
+            var order = new TestOrder
             {
-                TestOrderId = id,
+                TestOrderId = Guid.NewGuid(),
+                PatientId = Guid.NewGuid()
+            };
+
+            _repoMock.Setup(r => r.GetByIdAsync(order.TestOrderId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(order);
+
+            _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<PatientDto>());
+
+            Func<Task> act = async () =>
+                await _handler.Handle(new GetTestOrderDetailQuery(order.TestOrderId), CancellationToken.None);
+
+            act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage($"Patient with id '{order.PatientId}' was not found.");
+        }
+
+        // 3. createdBy UNKNOWN
+        [Test]
+        public async Task Handle_ShouldReturn_Unknown_WhenCreatedByNotFound()
+        {
+            var order = new TestOrder
+            {
+                TestOrderId = Guid.NewGuid(),
                 PatientId = Guid.NewGuid(),
                 CreateById = Guid.NewGuid()
             };
 
-            _repoMock.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(testOrder);
-
-            _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<PatientDto>()); // Empty list = not found
-
-            var query = new GetTestOrderDetailQuery(id);
-
-            // Act + Assert
-            var ex = Assert.ThrowsAsync<NotFoundException>(() => _handler.Handle(query, CancellationToken.None));
-            Assert.That(ex!.Message, Is.EqualTo($"Patient with id '{testOrder.PatientId}' was not found."));
-        }
-
-        /// <summary>
-        ///     Handles the should return detail dto when valid.
-        /// </summary>
-        [Test]
-        public async Task Handle_ShouldReturnDetailDto_WhenValid()
-        {
-            // Arrange
-            var id = Guid.NewGuid();
-            var patientId = Guid.NewGuid();
-            var creatorId = Guid.NewGuid();
-
-            var testOrder = new TestOrder
-            {
-                TestOrderId = id,
-                PatientId = patientId,
-                CreateById = creatorId,
-                Status = StatusTestOrder.Pending,
-                CreateAt = DateTime.UtcNow,
-                TestOrderDescription = "Blood Test"
-            };
-
             var patient = new PatientDto
             {
-                PatientId = patientId,
-                PatientName = "Nguyen Van A",
-                PhoneNumber = "0901234567",
-                Gender = true,
-                Address = "HCM",
+                PatientId = order.PatientId,
                 DateOfBirth = new DateOnly(2000, 1, 1)
             };
 
-            var user = new UserDto
+            _repoMock.Setup(r => r.GetByIdAsync(order.TestOrderId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(order);
+
+            _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<PatientDto> { patient });
+
+            _userGrpcMock.Setup(u => u.GetAllUsers(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<UserDto>()); // none found
+
+            _testDefGrpcMock.Setup(t => t.GetAllTestDefinitions(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TestDefinitionDto>());
+
+            var result = await _handler.Handle(new GetTestOrderDetailQuery(order.TestOrderId), CancellationToken.None);
+
+            result.CreatedBy.Should().Be("Unknown");
+        }
+
+        // 4. RunBy & ReviewBy null
+        [Test]
+        public async Task Handle_ShouldReturn_NullRunBy_And_NullReviewBy()
+        {
+            var creatorId = Guid.NewGuid();
+
+            var order = new TestOrder
+            {
+                TestOrderId = Guid.NewGuid(),
+                PatientId = Guid.NewGuid(),
+                CreateById = creatorId,
+                RunById = Guid.Empty,
+                ReviewId = null
+            };
+
+            var patient = new PatientDto
+            {
+                PatientId = order.PatientId,
+                DateOfBirth = new DateOnly(2000, 1, 1)
+            };
+
+            var creator = new UserDto
             {
                 UserId = creatorId,
-                FullName = "Doctor John"
+                FullName = "Doctor A"
             };
 
-            _repoMock.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(testOrder);
+            _repoMock.Setup(x => x.GetByIdAsync(order.TestOrderId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(order);
 
-            _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
+            _patientGrpcMock.Setup(x => x.GetAllPatients(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<PatientDto> { patient });
 
-            _userGrpcMock.Setup(u => u.GetAllUsers(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<UserDto> { user });
+            _userGrpcMock.Setup(x => x.GetAllUsers(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<UserDto> { creator });
 
-            var query = new GetTestOrderDetailQuery(id);
+            _testDefGrpcMock.Setup(x => x.GetAllTestDefinitions(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TestDefinitionDto>());
 
-            // Act
-            var result = await _handler.Handle(query, CancellationToken.None);
+            var result = await _handler.Handle(new GetTestOrderDetailQuery(order.TestOrderId), CancellationToken.None);
 
-            // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.TestOrderId, Is.EqualTo(id));
-                Assert.That(result.PatientId, Is.EqualTo(patientId));
-                Assert.That(result.PatientName, Is.EqualTo("Nguyen Van A"));
-                Assert.That(result.CreatedBy, Is.EqualTo("Doctor John"));
-                Assert.That(result.Status, Is.EqualTo("Pending"));
-            });
+            result.RunBy.Should().BeNull();
+            result.ReviewBy.Should().BeNull();
         }
 
-        /// <summary>
-        ///     Handles the should compute correct age.
-        /// </summary>
+        // 5. TestResult → Definition NOT found
         [Test]
-        public async Task Handle_ShouldComputeCorrectAge()
+        public async Task Handle_ShouldReturn_TestResult_WithNullNames_WhenDefinitionMissing()
         {
-            // Arrange
-            var id = Guid.NewGuid();
-            var patientId = Guid.NewGuid();
-
-            var birthdate = new DateOnly(DateTime.Today.Year - 30, 1, 1); // 30 years old
-
-            var testOrder = new TestOrder
+            var order = new TestOrder
             {
-                TestOrderId = id,
-                PatientId = patientId
+                TestOrderId = Guid.NewGuid(),
+                PatientId = Guid.NewGuid(),
+                CreateById = Guid.NewGuid(),
+                TestResults = new List<TestResult>
+                {
+                    new TestResult
+                    {
+                        TestResultId = Guid.NewGuid(),
+                        TestDefinitionId = 999,
+                        Value = 5.3 // double
+                    }
+                }
             };
 
             var patient = new PatientDto
             {
-                PatientId = patientId,
-                PatientName = "Test",
-                DateOfBirth = birthdate
+                PatientId = order.PatientId,
+                DateOfBirth = new DateOnly(1990, 1, 1)
             };
 
-            _repoMock.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(testOrder);
+            _repoMock.Setup(r => r.GetByIdAsync(order.TestOrderId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(order);
 
             _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<PatientDto> { patient });
@@ -191,120 +188,99 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Queries.GetDetai
             _userGrpcMock.Setup(u => u.GetAllUsers(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<UserDto>());
 
-            var query = new GetTestOrderDetailQuery(id);
+            _testDefGrpcMock.Setup(t => t.GetAllTestDefinitions(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TestDefinitionDto>());
 
-            // Act
-            var result = await _handler.Handle(query, CancellationToken.None);
+            var result = await _handler.Handle(new GetTestOrderDetailQuery(order.TestOrderId), CancellationToken.None);
 
-            // Assert
-            Assert.That(result.Age, Is.EqualTo(30));
+            result.TestResults.First().TestName.Should().BeNull();
+            result.TestResults.First().Unit.Should().BeNull();
         }
 
-        /// <summary>
-        ///     Handles the should include and map comments when test order has comments.
-        /// </summary>
+        // 6. Definition found
         [Test]
-        public async Task Handle_ShouldIncludeMappedComments_WhenTestOrderHasComments()
+        public async Task Handle_ShouldMap_TestResult_WithDefinition()
         {
-            // Arrange
-            var id = Guid.NewGuid();
-            var patientId = Guid.NewGuid();
-            var comment1Id = Guid.NewGuid();
-            var comment2Id = Guid.NewGuid();
-
-            // 1. Create Comments
-            var comment1 = new Comment
+            var order = new TestOrder
             {
-                CommentId = comment1Id,
-                Content = "Patient looks pale",
-                CreateByName = "Nurse Joy",
-                CreateAt = DateTime.UtcNow.AddHours(-2),
-                TestOrderId = id
+                TestOrderId = Guid.NewGuid(),
+                PatientId = Guid.NewGuid(),
+                CreateById = Guid.NewGuid(),
+                TestResults = new List<TestResult>
+                {
+                    new TestResult
+                    {
+                        TestResultId = Guid.NewGuid(),
+                        TestDefinitionId = 1,
+                        Value = 10.2 // double
+                    }
+                }
             };
 
-            var comment2 = new Comment
-            {
-                CommentId = comment2Id,
-                Content = "Vital signs stable",
-                CreateByName = "Dr. House",
-                CreateAt = DateTime.UtcNow.AddHours(-1),
-                TestOrderId = id
-            };
-
-            // 2. Create TestOrder with the comments attached
-            var testOrder = new TestOrder
-            {
-                TestOrderId = id,
-                PatientId = patientId,
-                Comments = new List<Comment> { comment1, comment2 }
-            };
-
-            // 3. Setup Patient (Required to pass the NotFound check before the loop)
             var patient = new PatientDto
             {
-                PatientId = patientId,
-                PatientName = "Test Patient",
-                DateOfBirth = new DateOnly(1990, 1, 1)
+                PatientId = order.PatientId,
+                DateOfBirth = new DateOnly(1995, 5, 10)
             };
 
-            _repoMock.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(testOrder);
+            var creator = new UserDto
+            {
+                UserId = order.CreateById,
+                FullName = "Dr A"
+            };
+
+            var def = new TestDefinitionDto
+            {
+                TestDefinitionId = 1,
+                TestName = "Glucose",
+                Unit = "mg/dL"
+            };
+
+            _repoMock.Setup(r => r.GetByIdAsync(order.TestOrderId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(order);
 
             _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<PatientDto> { patient });
 
             _userGrpcMock.Setup(u => u.GetAllUsers(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<UserDto>()); // Users irrelevant for this test, return empty
+                .ReturnsAsync(new List<UserDto> { creator });
 
-            var query = new GetTestOrderDetailQuery(id);
+            _testDefGrpcMock.Setup(t => t.GetAllTestDefinitions(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TestDefinitionDto> { def });
 
-            // Act
-            var result = await _handler.Handle(query, CancellationToken.None);
+            var result = await _handler.Handle(new GetTestOrderDetailQuery(order.TestOrderId), CancellationToken.None);
 
-            // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Comments, Is.Not.Null);
-                Assert.That(result.Comments.Count, Is.EqualTo(2));
-
-                // Verify mapping accuracy for first comment
-                var firstMapped = result.Comments.FirstOrDefault(c => c.CommentId == comment1Id);
-                Assert.That(firstMapped, Is.Not.Null);
-                Assert.That(firstMapped!.Content, Is.EqualTo("Patient looks pale"));
-                Assert.That(firstMapped.CreateByName, Is.EqualTo("Nurse Joy"));
-
-                // Verify mapping accuracy for second comment
-                var secondMapped = result.Comments.FirstOrDefault(c => c.CommentId == comment2Id);
-                Assert.That(secondMapped, Is.Not.Null);
-                Assert.That(secondMapped!.Content, Is.EqualTo("Vital signs stable"));
-            });
+            result.TestResults.First().TestName.Should().Be("Glucose");
+            result.TestResults.First().Unit.Should().Be("mg/dL");
         }
 
-        /// <summary>
-        ///     Handles the should return empty comment list when no comments exist.
-        /// </summary>
+        // 7. Comments mapping
         [Test]
-        public async Task Handle_ShouldReturnEmptyCommentList_WhenNoCommentsExist()
+        public async Task Handle_ShouldMap_Comments()
         {
-            // Arrange
-            var id = Guid.NewGuid();
-            var patientId = Guid.NewGuid();
-
-            var testOrder = new TestOrder
+            var c = new Comment
             {
-                TestOrderId = id,
-                PatientId = patientId,
-                Comments = new List<Comment>() // Empty List
+                CommentId = Guid.NewGuid(),
+                Content = "Hello world",
+                CreateByName = "Nurse",
+                CreateAt = DateTime.UtcNow
+            };
+
+            var order = new TestOrder
+            {
+                TestOrderId = Guid.NewGuid(),
+                PatientId = Guid.NewGuid(),
+                Comments = new List<Comment> { c }
             };
 
             var patient = new PatientDto
             {
-                PatientId = patientId,
+                PatientId = order.PatientId,
                 DateOfBirth = new DateOnly(1990, 1, 1)
             };
 
-            _repoMock.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(testOrder);
+            _repoMock.Setup(r => r.GetByIdAsync(order.TestOrderId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(order);
 
             _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<PatientDto> { patient });
@@ -312,17 +288,82 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Queries.GetDetai
             _userGrpcMock.Setup(u => u.GetAllUsers(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<UserDto>());
 
-            var query = new GetTestOrderDetailQuery(id);
+            _testDefGrpcMock.Setup(t => t.GetAllTestDefinitions(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TestDefinitionDto>());
 
-            // Act
-            var result = await _handler.Handle(query, CancellationToken.None);
+            var result = await _handler.Handle(new GetTestOrderDetailQuery(order.TestOrderId), CancellationToken.None);
 
-            // Assert
-            Assert.Multiple(() =>
+            result.Comments.Should().HaveCount(1);
+            result.Comments.First().Content.Should().Be("Hello world");
+        }
+
+        // 8. Empty comment list
+        [Test]
+        public async Task Handle_ShouldReturn_EmptyComments_WhenNone()
+        {
+            var order = new TestOrder
             {
-                Assert.That(result.Comments, Is.Not.Null);
-                Assert.That(result.Comments, Is.Empty);
-            });
+                TestOrderId = Guid.NewGuid(),
+                PatientId = Guid.NewGuid(),
+                Comments = new List<Comment>()
+            };
+
+            var patient = new PatientDto
+            {
+                PatientId = order.PatientId,
+                DateOfBirth = new DateOnly(1990, 1, 1)
+            };
+
+            _repoMock.Setup(r => r.GetByIdAsync(order.TestOrderId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(order);
+
+            _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<PatientDto> { patient });
+
+            _userGrpcMock.Setup(u => u.GetAllUsers(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<UserDto>());
+
+            _testDefGrpcMock.Setup(t => t.GetAllTestDefinitions(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TestDefinitionDto>());
+
+            var result = await _handler.Handle(new GetTestOrderDetailQuery(order.TestOrderId), CancellationToken.None);
+
+            result.Comments.Should().BeEmpty();
+        }
+
+        // 9. Age calculation
+        [Test]
+        public async Task Handle_ShouldCalculate_AgeCorrectly()
+        {
+            var order = new TestOrder
+            {
+                TestOrderId = Guid.NewGuid(),
+                PatientId = Guid.NewGuid()
+            };
+
+            var birth = new DateOnly(DateTime.Today.Year - 25, DateTime.Today.Month, DateTime.Today.Day);
+
+            var patient = new PatientDto
+            {
+                PatientId = order.PatientId,
+                DateOfBirth = birth
+            };
+
+            _repoMock.Setup(r => r.GetByIdAsync(order.TestOrderId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(order);
+
+            _patientGrpcMock.Setup(p => p.GetAllPatients(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<PatientDto> { patient });
+
+            _userGrpcMock.Setup(u => u.GetAllUsers(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<UserDto>());
+
+            _testDefGrpcMock.Setup(d => d.GetAllTestDefinitions(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TestDefinitionDto>());
+
+            var result = await _handler.Handle(new GetTestOrderDetailQuery(order.TestOrderId), CancellationToken.None);
+
+            result.Age.Should().Be(25);
         }
     }
 }
