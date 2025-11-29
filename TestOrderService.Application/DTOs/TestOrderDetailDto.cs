@@ -132,5 +132,13 @@
         ///     The comments.
         /// </value>
         public List<CommentDto> Comments { get; set; } = new List<CommentDto>();
+        // TestResults
+        /// <summary>
+        ///     Gets or sets the testResults.
+        /// </summary>
+        /// <value>
+        ///     The testResults.
+        /// </value>
+        public List<TestResultDto> TestResults { get; set; } = new List<TestResultDto>();
     }
 }

@@ -22,10 +22,13 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
         /// </summary>
         private readonly ITestOrderRepository _repo;
         /// <summary>
+        ///     The test definition GRPC
+        /// </summary>
+        private readonly ITestDefinitionGrpcClient _testDefGrpc;
+        /// <summary>
         ///     The user GRPC
         /// </summary>
         private readonly IUserGrpcClient _userGrpc;
-
         /// <summary>
         ///     Initializes a new instance of the <see cref="GetTestOrderDetailQueryHandler" /> class.
         /// </summary>
@@ -35,11 +38,13 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
         public GetTestOrderDetailQueryHandler(
             ITestOrderRepository repo,
             IPatientGrpcClient patientGrpc,
-            IUserGrpcClient userGrpc)
+            IUserGrpcClient userGrpc,
+            ITestDefinitionGrpcClient testDefGrpc)
         {
             _repo = repo;
             _patientGrpc = patientGrpc;
             _userGrpc = userGrpc;
+            _testDefGrpc = testDefGrpc;
         }
 
         /// <summary>
@@ -79,8 +84,32 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
                 commentList.Add(comment.Adapt<CommentDto>());
             }
 
+            var testDefinitions = await _testDefGrpc.GetAllTestDefinitions(cancellationToken);
 
-            // 5. Build DTO
+            var testResultDtos = t.TestResults.Select(r =>
+            {
+                var def = testDefinitions.FirstOrDefault(d => d.TestDefinitionId == r.TestDefinitionId);
+
+                return new TestResultDto
+                {
+                    TestResultId = r.TestResultId,
+                    Value = r.Value,
+                    Flag = r.Flag,
+                    Status = r.Status.ToString(),
+                    TestDefinitionId = r.TestDefinitionId,
+                    CreatedAt = r.CreatedAt,
+                    CreatedBy = r.CreatedBy,
+                    ReviewedBy = r.ReviewedBy,
+                    ReviewedAt = r.ReviewedAt,
+                    TestResultDescription = r.TestResultDescription,
+
+                    //  NEW FIELDS
+                    TestName = def?.TestName,
+                    Unit = def?.Unit
+                };
+            }).ToList();
+
+            // BUILD RESULT DTO
             return new TestOrderDetailDto
             {
                 TestOrderId = t.TestOrderId,
@@ -101,7 +130,9 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
                 CreatedBy = createdBy,
                 RunBy = runBy,
                 ReviewBy = reviewBy,
-                Comments = commentList
+
+                Comments = commentList,
+                TestResults = testResultDtos
             };
         }
     }
