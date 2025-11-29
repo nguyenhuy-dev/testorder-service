@@ -105,7 +105,8 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
 
                     //  NEW FIELDS
                     TestName = def?.TestName,
-                    Unit = def?.Unit
+                    Unit = def?.Unit,
+                    TestResultComments = r.TestResultComments.Select(c => c.Adapt<TestResultCommentDto>()).ToList()
                 };
             }).ToList();
 

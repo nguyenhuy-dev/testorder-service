@@ -1,7 +1,6 @@
 ﻿using MonitoringService.API.gRPC.Protos.TestDefinitionProto;
 using TestOrderService.Application.DTOs.gRPC.GetAllTestDefinitions;
 using TestOrderService.Application.Interfaces.gRPC;
-
 namespace TestOrderService.Infrastructure.gRPC.Clients
 {
     public class TestDefinitionGrpcClient : ITestDefinitionGrpcClient

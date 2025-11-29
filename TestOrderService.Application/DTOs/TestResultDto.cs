@@ -25,5 +25,7 @@
         public string? TestName { get; set; }
 
         public string? Unit { get; set; }
+
+        public List<TestResultCommentDto> TestResultComments { get; set; } = new List<TestResultCommentDto>();
     }
 }
