@@ -1,10 +1,10 @@
 ﻿using Confluent.Kafka;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using TestOrderService.Application.Interfaces.EventBus;
 using TestOrderService.Application.Interfaces.Events;
-using TestOrderService.Application.Interfaces.Message;
 namespace TestOrderService.Infrastructure.EventBus.Kafka
 {
     public class EventHandlingService(
@@ -43,8 +43,8 @@ namespace TestOrderService.Infrastructure.EventBus.Kafka
                             if (consumeResult != null)
                             {
                                 using var scope = _serviceScopeFactory.CreateScope();
-                                var publisherMediatR = scope.ServiceProvider.GetRequiredService<IPublisherMediatR>();
-                                await ProcessMessageAsync(publisherMediatR, consumeResult.Message.Value, stoppingToken);
+                                var publisherMediator = scope.ServiceProvider.GetRequiredService<IPublisher>();
+                                await ProcessMessageAsync(publisherMediator, consumeResult.Message.Value, stoppingToken);
                             }
                             else
                             {
@@ -66,7 +66,7 @@ namespace TestOrderService.Infrastructure.EventBus.Kafka
             }
         }
 
-        private async Task ProcessMessageAsync(IPublisherMediatR publisherMediatR, MessageEnvelop message, CancellationToken stoppingToken)
+        private async Task ProcessMessageAsync(IPublisher publisherMediator, MessageEnvelop message, CancellationToken stoppingToken)
         {
             var @event = _integrationEventFactory.CreateEvent(message.MessageTypeName, message.Message);
 
@@ -76,7 +76,7 @@ namespace TestOrderService.Infrastructure.EventBus.Kafka
                 {
                     _logger.LogInformation("Processing message {T}: {Message}", message.MessageTypeName, message.Message);
 
-                    await publisherMediatR.Publish(@event, stoppingToken);
+                    await publisherMediator.Publish(@event, stoppingToken);
                 }
                 else
                     _logger.LogDebug("Event skipped: {T}", message.MessageTypeName);

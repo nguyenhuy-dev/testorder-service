@@ -33,6 +33,7 @@
             MessageTypeName = messageTypeName ?? throw new ArgumentNullException(nameof(messageTypeName));
             Message = message ?? throw new ArgumentNullException(nameof(message));
         }
+
         /// <summary>
         ///     Gets or sets the name of the message type.
         /// </summary>

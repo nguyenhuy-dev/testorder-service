@@ -21,6 +21,7 @@ using TestOrderService.Application.Interfaces.gRPC;
 using TestOrderService.Infrastructure;
 using TestOrderService.Infrastructure.Data;
 using TestOrderService.Infrastructure.EventBus;
+using TestOrderService.Infrastructure.EventBus.Kafka;
 using TestOrderService.Infrastructure.gRPC.Clients;
 using TestOrderService.Infrastructure.Repositories;
 using TestOrderService.Infrastructure.Services;
@@ -47,13 +48,13 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ITestResultCommentRepository, TestResultCommentRepository>();
 builder.Services.AddScoped<ITestOrderRepository, TestOrderRepository>();
-// builder.Services.AddScoped<ITestResultRepository, TestResultRepository>();
+builder.Services.AddScoped<ITestResultRepository, TestResultRepository>();
 
 var infrastructureAssembly = typeof(IAssemblyReference).Assembly;
 var applicationAssembly = typeof(TestOrderService.Application.IAssemblyReference).Assembly;
 builder.Services.AddMediatR(cfg =>
     {
-        cfg.RegisterServicesFromAssemblies(applicationAssembly); // , infrastructureAssembly
+        cfg.RegisterServicesFromAssemblies(applicationAssembly, infrastructureAssembly);
         cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
     }
 );
@@ -99,25 +100,24 @@ builder.Services.AddCors(options =>
             .AllowCredentials());
 });
 
-// builder.AddKafkaProducer("kafka");
+builder.AddKafkaProducer("kafka");
 var kafkaTopic = builder.Configuration["EVENT_PUBLISHING_TOPICS"];
 if (!string.IsNullOrEmpty(kafkaTopic))
-    // builder.AddKafkaEventPublisher(kafkaTopic);
-    builder.Services.AddTransient<IEventPublisher, NullEventPublisher>();
+    builder.AddKafkaEventPublisher(kafkaTopic);
 else
     builder.Services.AddTransient<IEventPublisher, NullEventPublisher>();
 
 var eventConsumingTopics = builder.Configuration["EVENT_CONSUMING_TOPICS"];
 if (!string.IsNullOrEmpty(eventConsumingTopics))
 {
-    // builder.AddKafkaEventConsumer(options =>
-    //     {
-    //         options.ServiceName = "TestOrderService";
-    //         options.KafkaGroupId = "test-order";
-    //         options.Topics.AddRange(eventConsumingTopics.Split(','));
-    //         options.IntegrationEventFactory = IntegrationEventFactory.Instance;
-    //     }
-    // );
+    builder.AddKafkaEventConsumer(options =>
+        {
+            options.ServiceName = "TestOrderService";
+            options.KafkaGroupId = "test-order";
+            options.Topics.AddRange(eventConsumingTopics.Split(','));
+            options.IntegrationEventFactory = IntegrationEventFactory.Instance;
+        }
+    );
 }
 else
     throw new InvalidOperationException("'EVENT_CONSUMING_TOPICS' cant be null.");
@@ -126,9 +126,9 @@ builder.Services.AddAuthentication("JwtBearer")
     .AddScheme<LabAuthenticationSchemeOptions, LabAuthenticationHandler>("JwtBearer", configureOptions =>
         {
             var sectionJwt = configuration.GetSection("Jwt");
-            configureOptions.IssuerSigningKey = sectionJwt["SigningKey"] ?? throw new InvalidOperationException("'SigningKey' can't be read.");
-            configureOptions.ValidIssuer = sectionJwt["Issuer"] ?? throw new InvalidOperationException("'Issuer' can't be read.");
-            configureOptions.ValidAudience = sectionJwt["Audience"] ?? throw new InvalidOperationException("'Audience' can't be read.");
+            configureOptions.IssuerSigningKey = sectionJwt["SigningKey"] ?? throw new InvalidDataException("'SigningKey' can't be read.");
+            configureOptions.ValidIssuer = sectionJwt["Issuer"] ?? throw new InvalidDataException("'Issuer' can't be read.");
+            configureOptions.ValidAudience = sectionJwt["Audience"] ?? throw new InvalidDataException("'Audience' can't be read.");
         }
     );
 builder.Services.AddMemoryCache();
@@ -157,6 +157,6 @@ app.MapControllers();
 
 app.MapGrpcService<TestOrderGrpcService>();
 
-// await app.MigrateDbContextAsync<TestOrderServiceDbContext>();
+await app.MigrateDbContextAsync<TestOrderServiceDbContext>();
 
 await app.RunAsync();

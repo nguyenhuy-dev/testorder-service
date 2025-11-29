@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using TestOrderService.Application.Interfaces;
+﻿using TestOrderService.Application.Interfaces;
 using TestOrderService.Domain.Entities;
+using TestOrderService.Infrastructure.Data;
 namespace TestOrderService.Infrastructure.Repositories
 {
-    public class TestResultRepository(DbContext dbContext) : ITestResultRepository
+    public class TestResultRepository(TestOrderServiceDbContext dbContext) : ITestResultRepository
     {
-        private readonly DbContext _dbContext = dbContext;
+        private readonly TestOrderServiceDbContext _dbContext = dbContext;
 
         public async Task<TestResult> CreateTestResult(TestResult testResult, CancellationToken cancellationToken)
         {
