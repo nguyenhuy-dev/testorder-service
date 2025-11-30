@@ -35,6 +35,7 @@ namespace TestOrderService.Domain.Entities
         public List<Comment> Comments { get; set; } = [];
 
         public List<TestResult> TestResults { get; set; } = [];
+        public string? AIReviewSummary { get; set; }
     }
 
     public enum StatusTestOrder

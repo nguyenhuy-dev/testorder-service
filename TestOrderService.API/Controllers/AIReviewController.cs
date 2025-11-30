@@ -75,6 +75,15 @@ namespace TestOrderService.API.Controllers
                 }
             }
 
+            if (result.Suggestions != null && result.Suggestions.Count > 0)
+            {
+                testOrder.AIReviewSummary = string.Join("\n", result.Suggestions);
+            }
+            else
+            {
+                testOrder.AIReviewSummary = result.Prediction;
+            }
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Ok(result);

@@ -140,5 +140,12 @@
         ///     The testResults.
         /// </value>
         public List<TestResultDto> TestResults { get; set; } = new List<TestResultDto>();
+        /// <summary>
+        ///     Gets or sets the AI review summary.
+        /// </summary>
+        /// <value>
+        ///     The AI review summary.
+        /// </value>
+        public string? AIReviewSummary { get; set; }
     }
 }
