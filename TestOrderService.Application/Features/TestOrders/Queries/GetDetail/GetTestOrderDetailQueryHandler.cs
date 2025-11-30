@@ -133,7 +133,10 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
                 ReviewBy = reviewBy,
 
                 Comments = commentList,
-                TestResults = testResultDtos
+                TestResults = testResultDtos,
+
+                // Include AIReviewSummary
+                AIReviewSummary = t.AIReviewSummary
             };
         }
     }
