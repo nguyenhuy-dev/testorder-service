@@ -17,6 +17,7 @@ namespace TestOrderService.Infrastructure.EventHandlers
         private readonly ILogger<TestResultIntegrationEventHandler> _logger = logger;
 
         private readonly ITestOrderRepository _testOrderRepository = testOrderRepository;
+
         private readonly ITestResultRepository _testResultRepository = testResultRepository;
 
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
@@ -24,7 +25,7 @@ namespace TestOrderService.Infrastructure.EventHandlers
         public async Task Handle(TestResultsCreatedIntegrationEvent request, CancellationToken cancellationToken)
         {
             var testOrderId = request.TestOrderId;
-
+            var createdById = request.CreatedBy;
             _logger.LogInformation("Handling test results created event: 'TestOrderId' {TestOrderId}", testOrderId);
 
             var testResults = request.TestResults.Select(t => t.Adapt<TestResult>());
@@ -34,11 +35,11 @@ namespace TestOrderService.Infrastructure.EventHandlers
                 await _testResultRepository.CreateTestResult(testResult, cancellationToken);
             }
 
-            await _testOrderRepository.UpdateTestOrderToCompleted(testOrderId, cancellationToken);
+            await _testOrderRepository.UpdateTestOrderToCompleted(testOrderId, createdById, cancellationToken);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Handling for creating test result successfully: 'TestOrderId' {TestOrderId}", testOrderId);
+            _logger.LogInformation("Handled test results created event successfully: 'TestOrderId' {TestOrderId}", testOrderId);
         }
     }
 }

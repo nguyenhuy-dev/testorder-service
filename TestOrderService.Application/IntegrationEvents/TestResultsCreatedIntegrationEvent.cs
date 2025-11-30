@@ -7,5 +7,7 @@ namespace TestOrderService.Application.IntegrationEvents
         public Guid TestOrderId { get; set; }
 
         public List<TestResult> TestResults { get; set; } = [];
+
+        public Guid CreatedBy { get; set; }
     }
 }
