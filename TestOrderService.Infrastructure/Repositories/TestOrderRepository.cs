@@ -164,11 +164,14 @@ namespace TestOrderService.Infrastructure.Repositories
             return await _dbContext.TestOrders.FirstOrDefaultAsync(t => t.TestOrderId == id, cancellationToken);
         }
 
-        public async Task<TestOrder> UpdateTestOrderToCompleted(Guid testOrderId, CancellationToken cancellationToken)
+        public async Task<TestOrder> UpdateTestOrderToCompleted(Guid testOrderId, Guid createdById, CancellationToken cancellationToken)
         {
             var testOrderQuery = _dbContext.TestOrders.Where(t => t.TestOrderId == testOrderId);
             await testOrderQuery.ExecuteUpdateAsync(t =>
-                t.SetProperty(p => p.Status, StatusTestOrder.Completed), cancellationToken);
+                    t.SetProperty(p => p.Status, StatusTestOrder.Completed)
+                        .SetProperty(p => p.UpdateById, createdById)
+                        .SetProperty(p => p.UpdateAt, DateTime.UtcNow), cancellationToken
+            );
 
             return await testOrderQuery.FirstAsync(cancellationToken);
         }
