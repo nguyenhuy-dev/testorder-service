@@ -146,6 +146,6 @@
         /// <value>
         ///     The AI review summary.
         /// </value>
-        public string? AIReviewSummary { get; set; }
+        public AIReviewSummaryDto? AIReviewSummary { get; set; }
     }
 }

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using TestOrderService.API.Services;
 using TestOrderService.Application.DTOs.AIReview;
 using TestOrderService.Application.Interfaces;
-using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Controllers
 {
     [ApiController]
@@ -54,37 +53,15 @@ namespace TestOrderService.API.Controllers
 
             if (result == null)
             {
-                _logger.LogWarning("AI Review Service is unavailable or returned null");
                 return StatusCode(StatusCodes.Status503ServiceUnavailable,
                     new { message = "AI Review Service is currently unavailable" });
             }
 
-            // Update TestOrder and TestResults to AIReviewed
             var testOrder = await _testOrderRepository.GetByIdAsync(testOrderId, cancellationToken);
             if (testOrder == null)
             {
                 return NotFound(new { message = "TestOrder not found" });
             }
-
-            testOrder.Status = StatusTestOrder.AIReviewed;
-            if (testOrder.TestResults != null)
-            {
-                foreach (var testResult in testOrder.TestResults)
-                {
-                    testResult.Status = TestResultStatus.AIReviewed;
-                }
-            }
-
-            if (result.Suggestions != null && result.Suggestions.Count > 0)
-            {
-                testOrder.AIReviewSummary = string.Join("\n", result.Suggestions);
-            }
-            else
-            {
-                testOrder.AIReviewSummary = result.Prediction;
-            }
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Ok(result);
         }

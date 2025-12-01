@@ -1,50 +1,26 @@
+using Mapster;
 using Microsoft.Extensions.Logging;
+using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Exceptions;
 using TestOrderService.Application.IntegrationEvents;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.EventBus;
 using TestOrderService.Application.Interfaces.Message;
-using Entities=TestOrderService.Domain.Entities;
-
 namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOrder
 {
-    /// <summary>
-    ///     Command handler for update test order implement.
-    /// </summary>
-    /// <seealso cref="ICommandHandler{UpdateTestOrderCommand,Entities}.TestOrder}" />
     public class UpdateTestOrderCommandHandler(
         ITestOrderRepository testOrderRepository,
         IUnitOfWork unitOfWork,
         IEventPublisher eventPublisher,
-        ILogger<UpdateTestOrderCommandHandler> logger) : ICommandHandler<UpdateTestOrderCommand, Entities.TestOrder>
+        ILogger<UpdateTestOrderCommandHandler> logger)
+        : ICommandHandler<UpdateTestOrderCommand, TestOrderDto>
     {
-
-        /// <summary>
-        ///     The event publisher
-        /// </summary>
         private readonly IEventPublisher _eventPublisher = eventPublisher;
-
-        /// <summary>
-        ///     The logger
-        /// </summary>
         private readonly ILogger<UpdateTestOrderCommandHandler> _logger = logger;
-        /// <summary>
-        ///     The test order repository
-        /// </summary>
         private readonly ITestOrderRepository _testOrderRepository = testOrderRepository;
-
-        /// <summary>
-        ///     The unit of work
-        /// </summary>
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
-        /// <summary>
-        ///     Handles the specified request.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
-        public async Task<Entities.TestOrder> Handle(UpdateTestOrderCommand request, CancellationToken cancellationToken)
+        public async Task<TestOrderDto> Handle(UpdateTestOrderCommand request, CancellationToken cancellationToken)
         {
             var testOrder = await _testOrderRepository.GetByIdAsync(request.TestOrderId, cancellationToken);
 
@@ -56,39 +32,36 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOr
                 );
             }
 
-            // Update only provided fields (partial update)
-            // RunById and RunAt can be updated independently
+            // Partial update
             if (request.RunById.HasValue)
-            {
                 testOrder.RunById = request.RunById.Value;
-            }
 
             if (request.RunAt.HasValue)
-            {
                 testOrder.RunAt = request.RunAt;
-            }
 
-            // TestOrderDescription can be set to null (empty string from frontend becomes null)
             if (request.TestOrderDescription != null)
             {
-                // Allow empty string to clear the description
-                testOrder.TestOrderDescription = string.IsNullOrWhiteSpace(request.TestOrderDescription)
-                    ? null
-                    : request.TestOrderDescription;
+                testOrder.TestOrderDescription =
+                    string.IsNullOrWhiteSpace(request.TestOrderDescription)
+                        ? null
+                        : request.TestOrderDescription;
             }
 
             if (request.Status.HasValue)
-            {
                 testOrder.Status = request.Status.Value;
+
+            if (request.AIReviewSummary != null)
+            {
+                testOrder.AIReviewSummary = request.AIReviewSummary;
+                _logger.LogInformation("AIReviewSummary updated for TestOrder {TestOrderId}", testOrder.TestOrderId);
             }
 
-            // Always set update tracking fields when updating
             testOrder.UpdateById = request.UpdateById;
             testOrder.UpdateAt = request.UpdateAt;
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Publish integration event
+            // Publish event
             var updatedEvent = new TestOrderUpdatedIntegrationEvent
             {
                 TestOrderId = testOrder.TestOrderId,
@@ -99,9 +72,7 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOr
             };
             await _eventPublisher.PublishAsync(updatedEvent);
 
-            _logger.LogInformation("Updated test order with id: {TestOrderId}", testOrder.TestOrderId);
-
-            return testOrder;
+            return testOrder.Adapt<TestOrderDto>();
         }
     }
 }

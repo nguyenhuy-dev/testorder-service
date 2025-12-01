@@ -33,22 +33,50 @@ namespace TestOrderService.API.Test.Controllers
         private AIReviewController _controller;
 
         [Test]
-        public async Task ReviewCBC_ShouldReturnOkAndUpdateStatus_WhenValidRequest()
+        public async Task ReviewCBC_ShouldReturnOk_WhenValidRequest()
         {
             // Arrange
             var testOrderId = Guid.NewGuid();
-            var request = new AIReviewRequestDto { Sex = 0, Wbc = 5, Rbc = 4, Hgb = 13, Hct = 40, Plt = 200, Mcv = 90, Mch = 30, Mchc = 33 };
-            var aiResult = new AIReviewResponseDto { Prediction = "Normal", PredictionCode = 0, Confidence = 99 };
+            var request = new AIReviewRequestDto
+            {
+                Sex = 0,
+                Wbc = 5,
+                Rbc = 4,
+                Hgb = 13,
+                Hct = 40,
+                Plt = 200,
+                Mcv = 90,
+                Mch = 30,
+                Mchc = 33
+            };
+
+            var aiResult = new AIReviewResponseDto
+            {
+                Prediction = "Normal",
+                PredictionCode = 0,
+                Confidence = 99
+            };
+
             var testResults = new List<TestResult>
             {
                 new TestResult { TestResultId = Guid.NewGuid(), Status = TestResultStatus.Completed },
                 new TestResult { TestResultId = Guid.NewGuid(), Status = TestResultStatus.Completed }
             };
-            var testOrder = new TestOrder { TestOrderId = testOrderId, Status = StatusTestOrder.Pending, TestResults = testResults };
 
-            _mockAIReviewService.Setup(x => x.ReviewCBCAsync(request, It.IsAny<CancellationToken>())).ReturnsAsync(aiResult);
-            _mockTestOrderRepository.Setup(x => x.GetByIdAsync(testOrderId, It.IsAny<CancellationToken>())).ReturnsAsync(testOrder);
-            _mockUnitOfWork.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+            var testOrder = new TestOrder
+            {
+                TestOrderId = testOrderId,
+                Status = StatusTestOrder.Pending,
+                TestResults = testResults
+            };
+
+            _mockAIReviewService
+                .Setup(x => x.ReviewCBCAsync(request, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(aiResult);
+
+            _mockTestOrderRepository
+                .Setup(x => x.GetByIdAsync(testOrderId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(testOrder);
 
             // Act
             var result = await _controller.ReviewCBC(request, testOrderId, CancellationToken.None);
@@ -58,8 +86,12 @@ namespace TestOrderService.API.Test.Controllers
             Assert.That(okResult, Is.Not.Null);
             Assert.That(okResult!.StatusCode, Is.EqualTo(200));
             Assert.That(((AIReviewResponseDto)okResult.Value!).Prediction, Is.EqualTo("Normal"));
-            Assert.That(testOrder.Status, Is.EqualTo(StatusTestOrder.AIReviewed));
-            Assert.That(testOrder.TestResults.TrueForAll(tr => tr.Status == TestResultStatus.AIReviewed));
+
+            Assert.That(testOrder.Status, Is.EqualTo(StatusTestOrder.Pending));
+
+            Assert.That(testOrder.TestResults.TrueForAll(tr => tr.Status == TestResultStatus.Completed));
+
+            _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
