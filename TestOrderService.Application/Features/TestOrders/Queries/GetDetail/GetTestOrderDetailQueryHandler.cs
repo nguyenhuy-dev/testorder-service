@@ -1,5 +1,6 @@
 ﻿using Mapster;
 using MediatR;
+using System.Text.Json;
 using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Exceptions;
 using TestOrderService.Application.Interfaces;
@@ -136,8 +137,31 @@ namespace TestOrderService.Application.Features.TestOrders.Queries.GetDetail
                 TestResults = testResultDtos,
 
                 // Include AIReviewSummary
-                AIReviewSummary = t.AIReviewSummary
+                AIReviewSummary = TryParseAISummary(t.AIReviewSummary)
             };
+        }
+        private static AIReviewSummaryDto? TryParseAISummary(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+
+            try
+            {
+                return JsonSerializer.Deserialize<AIReviewSummaryDto>(
+                    raw,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }
+                );
+            }
+            catch
+            {
+                return new AIReviewSummaryDto
+                {
+                    Suggestions = new List<string> { raw }
+                };
+            }
         }
     }
 }

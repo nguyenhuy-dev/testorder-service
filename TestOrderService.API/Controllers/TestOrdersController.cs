@@ -83,7 +83,7 @@ namespace TestOrderService.API.Controllers
 
             var testOrder = await _sender.Send(updateTestOrderCommand, cancellationToken);
 
-            return Ok(new ApiResponse<TestOrder>
+            return Ok(new ApiResponse<TestOrderDto>
             {
                 StatusCode = 200,
                 Message = "Test order updated successfully.",

@@ -8,6 +8,7 @@ namespace TestOrderService.Application.DTOs
         Guid? RunById,
         DateTime? RunAt,
         string? TestOrderDescription,
-        StatusTestOrder? Status
+        StatusTestOrder? Status,
+        string? AIReviewSummary
     );
 }

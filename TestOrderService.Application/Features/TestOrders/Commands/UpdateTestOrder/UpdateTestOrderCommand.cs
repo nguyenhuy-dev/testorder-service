@@ -1,3 +1,4 @@
+using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Interfaces.Message;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOrder
@@ -6,7 +7,7 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOr
     ///     Update test order command.
     /// </summary>
     /// <seealso cref="ICommand{TestOrder}" />
-    public class UpdateTestOrderCommand : ICommand<TestOrder>
+    public class UpdateTestOrderCommand : ICommand<TestOrderDto>
     {
         /// <summary>
         ///     Gets or sets the test order identifier.
@@ -63,5 +64,6 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOr
         ///     The update at.
         /// </value>
         public DateTime UpdateAt { get; set; } = DateTime.UtcNow;
+        public string? AIReviewSummary { get; set; }
     }
 }
