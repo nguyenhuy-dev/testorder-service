@@ -6,6 +6,7 @@ using TestOrderService.Application.IntegrationEvents;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.EventBus;
 using TestOrderService.Application.Interfaces.Message;
+using TestOrderService.Domain.Entities;
 namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOrder
 {
     public class UpdateTestOrderCommandHandler(
@@ -54,6 +55,22 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOr
             {
                 testOrder.AIReviewSummary = request.AIReviewSummary;
                 _logger.LogInformation("AIReviewSummary updated for TestOrder {TestOrderId}", testOrder.TestOrderId);
+            }
+
+            if (request.Status == StatusTestOrder.AIReviewed)
+            {
+                foreach (var tr in testOrder.TestResults)
+                {
+                    tr.Status = TestResultStatus.AIReviewed;
+                    tr.ReviewedBy = request.UpdateById;
+                    tr.ReviewedAt = DateTime.UtcNow;
+                }
+
+                _logger.LogInformation(
+                    "Auto updated {Count} TestResults to AIReviewed for TestOrder {TestOrderId}",
+                    testOrder.TestResults.Count,
+                    testOrder.TestOrderId
+                );
             }
 
             testOrder.UpdateById = request.UpdateById;
