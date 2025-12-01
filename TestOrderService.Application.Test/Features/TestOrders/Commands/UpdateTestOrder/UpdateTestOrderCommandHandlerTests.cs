@@ -248,6 +248,52 @@ namespace TestOrderService.Application.Test.Features.TestOrders.Commands.UpdateT
         ///     Handles the preserves existing values when null is provided for optional fields.
         /// </summary>
         [Test]
+        public async Task Handle_UpdatesTestResults_WhenStatusIsAIReviewed()
+        {
+            // Arrange
+            var testOrderId = Guid.NewGuid();
+            var updateById = Guid.NewGuid();
+
+            var existingTestOrder = new TestOrder
+            {
+                TestOrderId = testOrderId,
+                Status = StatusTestOrder.Completed,
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { Status = TestResultStatus.Completed },
+                    new TestResult { Status = TestResultStatus.Completed }
+                }
+            };
+
+            var command = new UpdateTestOrderCommand
+            {
+                TestOrderId = testOrderId,
+                Status = StatusTestOrder.AIReviewed,
+                UpdateById = updateById,
+                UpdateAt = DateTime.UtcNow,
+                AIReviewSummary = "{\"prediction\":\"Normal\"}"
+            };
+
+            _testOrderRepositoryMock
+                .Setup(r => r.GetByIdAsync(testOrderId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(existingTestOrder);
+
+            _unitOfWorkMock
+                .Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+
+            // Act
+            var result = await _handler.Handle(command, CancellationToken.None);
+
+            // Assert
+            result.Status.Should().Be(StatusTestOrder.AIReviewed.ToString());
+            existingTestOrder.TestResults.Should().OnlyContain(r =>
+                r.Status == TestResultStatus.AIReviewed &&
+                r.ReviewedBy == updateById &&
+                r.ReviewedAt != null
+            );
+        }
+        [Test]
         public async Task Handle_PreservesExistingValues_WhenNullIsProvidedForOptionalFields()
         {
             var testOrderId = Guid.NewGuid();
