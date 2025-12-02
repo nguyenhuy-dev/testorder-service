@@ -7,7 +7,7 @@ namespace TestOrderService.Infrastructure.Repositories
     {
         private readonly TestOrderServiceDbContext _dbContext = dbContext;
 
-        public async Task<TestResult> CreateTestResult(TestResult testResult, CancellationToken cancellationToken)
+        public async Task<TestResult> CreateTestResultAsync(TestResult testResult, CancellationToken cancellationToken)
         {
             await _dbContext.AddAsync(testResult, cancellationToken);
 

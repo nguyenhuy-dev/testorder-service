@@ -2,7 +2,7 @@ using Mapster;
 using Microsoft.Extensions.Logging;
 using TestOrderService.Application.DTOs;
 using TestOrderService.Application.Exceptions;
-using TestOrderService.Application.IntegrationEvents;
+using TestOrderService.Application.IntegrationEvents.TestOrders;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.EventBus;
 using TestOrderService.Application.Interfaces.Message;

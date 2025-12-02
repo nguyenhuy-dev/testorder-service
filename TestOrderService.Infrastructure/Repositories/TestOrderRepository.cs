@@ -52,6 +52,7 @@ namespace TestOrderService.Infrastructure.Repositories
         {
             return await _dbContext.TestOrders.ToArrayAsync(cancellationToken);
         }
+
         /// <summary>
         ///     Gets the by id using the specified id
         /// </summary>
@@ -74,6 +75,7 @@ namespace TestOrderService.Infrastructure.Repositories
         {
             _dbContext.TestOrders.Remove(entity);
         }
+
         /// <summary>
         ///     Gets test orders with pagination, filtering, and patient information from gRPC.
         /// </summary>
@@ -174,6 +176,19 @@ namespace TestOrderService.Infrastructure.Repositories
             );
 
             return await testOrderQuery.FirstAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<TestOrder>> GetTestOrdersCompletedButMissingTestResults(CancellationToken cancellationToken)
+        {
+            return await _dbContext.TestOrders
+                .Include(t => t.TestResults)
+                .Where(t => t.Status == StatusTestOrder.Completed && !t.TestResults.Any())
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<TestOrder?> GetTestOrderByIdWithTrackingAsync(Guid testOrderId, CancellationToken cancellationToken)
+        {
+            return await _dbContext.TestOrders.AsTracking().FirstOrDefaultAsync(t => t.TestOrderId == testOrderId, cancellationToken);
         }
     }
 }

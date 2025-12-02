@@ -3,6 +3,6 @@ namespace TestOrderService.Application.Interfaces
 {
     public interface ITestResultRepository
     {
-        Task<TestResult> CreateTestResult(TestResult testResult, CancellationToken cancellationToken);
+        Task<TestResult> CreateTestResultAsync(TestResult testResult, CancellationToken cancellationToken);
     }
 }

@@ -45,5 +45,9 @@ namespace TestOrderService.Application.Interfaces
         Task<TestOrder?> GetTestOrderByIdNotIncludeAsync(Guid id, CancellationToken cancellationToken);
 
         Task<TestOrder> UpdateTestOrderToCompleted(Guid testOrderId, Guid createdById, CancellationToken cancellationToken);
+
+        Task<IEnumerable<TestOrder>> GetTestOrdersCompletedButMissingTestResults(CancellationToken cancellationToken);
+
+        Task<TestOrder?> GetTestOrderByIdWithTrackingAsync(Guid testOrderId, CancellationToken cancellationToken);
     }
 }

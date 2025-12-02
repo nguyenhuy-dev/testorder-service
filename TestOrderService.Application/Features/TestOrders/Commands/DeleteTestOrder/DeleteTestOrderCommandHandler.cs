@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using TestOrderService.Application.Exceptions;
-using TestOrderService.Application.IntegrationEvents;
+using TestOrderService.Application.IntegrationEvents.TestOrders;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.EventBus;
 using TestOrderService.Domain.Entities;
