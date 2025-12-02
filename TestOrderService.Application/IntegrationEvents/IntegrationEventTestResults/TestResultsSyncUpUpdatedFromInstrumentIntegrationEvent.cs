@@ -1,13 +1,13 @@
 ﻿using TestOrderService.Application.Interfaces.Events;
 using TestOrderService.Domain.Entities;
-namespace TestOrderService.Application.IntegrationEvents
+namespace TestOrderService.Application.IntegrationEvents.TestResultIntegrationEvents
 {
-    public class TestResultsCreatedIntegrationEvent : IntegrationEvent
+    public class TestResultsSyncUpUpdatedFromInstrumentIntegrationEvent : IntegrationEvent
     {
         public Guid TestOrderId { get; set; }
 
         public List<TestResult> TestResults { get; set; } = [];
 
-        public Guid CreatedBy { get; set; }
+        public Guid UpdatedBy { get; set; }
     }
 }

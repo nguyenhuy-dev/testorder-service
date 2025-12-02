@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Moq;
 using TestOrderService.Application.Features.TestOrders.Commands.CreateTestOrder;
-using TestOrderService.Application.IntegrationEvents;
+using TestOrderService.Application.IntegrationEvents.TestOrders;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.EventBus;
 using Entities=TestOrderService.Domain.Entities;

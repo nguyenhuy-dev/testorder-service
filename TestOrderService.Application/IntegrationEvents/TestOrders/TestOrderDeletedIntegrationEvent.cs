@@ -1,5 +1,5 @@
 ﻿using TestOrderService.Application.Interfaces.Events;
-namespace TestOrderService.Application.IntegrationEvents
+namespace TestOrderService.Application.IntegrationEvents.TestOrders
 {
     public class TestOrderDeletedIntegrationEvent : IntegrationEvent
     {
