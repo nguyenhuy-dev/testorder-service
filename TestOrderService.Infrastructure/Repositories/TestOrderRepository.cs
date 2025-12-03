@@ -190,5 +190,91 @@ namespace TestOrderService.Infrastructure.Repositories
         {
             return await _dbContext.TestOrders.AsTracking().FirstOrDefaultAsync(t => t.TestOrderId == testOrderId, cancellationToken);
         }
+
+        /// <summary>
+        ///     Gets all test orders for a specific patient
+        /// </summary>
+        /// <param name="patientId">The patient identifier</param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns>List of test orders for the patient</returns>
+        public async Task<List<TestOrderDto>> GetTestOrdersByPatientIdAsync(Guid id, CancellationToken cancellationToken)
+        {
+            // Get all patients from gRPC first
+            var patients = await _patientGrpcClient.GetAllPatients(cancellationToken);
+
+            // Try to find patient by the id (could be userId or patientId)
+            var patient = patients.FirstOrDefault(p => p.PatientId == id || p.UserId == id);
+
+            if (patient == null)
+            {
+                // Patient not found - id is neither a valid patientId nor a userId linked to a patient
+                return new List<TestOrderDto>();
+            }
+
+            // Now we have the actual patientId
+            var patientId = patient.PatientId;
+
+            // Get test orders for this patient
+            var testOrders = await _dbContext.TestOrders
+                .AsNoTracking()
+                .Where(t => t.PatientId == patientId)
+                .OrderByDescending(t => t.CreateAt)
+                .ToListAsync(cancellationToken);
+
+            if (!testOrders.Any())
+            {
+                return new List<TestOrderDto>();
+            }
+
+            // Get all user IDs we need
+            var userIds = testOrders
+                .SelectMany(t => new[] { t.CreateById, t.RunById })
+                .Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToList();
+
+            // Get users from gRPC
+            var users = await _userGrpcClient.GetAllUsers(cancellationToken);
+            var userDict = users.Where(u => userIds.Contains(u.UserId)).ToDictionary(u => u.UserId);
+
+            // Calculate age
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var age = today.Year - patient.DateOfBirth.Year;
+            if (patient.DateOfBirth > today.AddYears(-age)) age--;
+
+            // Map to DTOs
+            var result = testOrders.Select(t =>
+            {
+                var createByName = userDict.ContainsKey(t.CreateById)
+                    ? userDict[t.CreateById].FullName
+                    : string.Empty;
+
+                string? runByName = null;
+                if (t.RunById != Guid.Empty && userDict.ContainsKey(t.RunById))
+                {
+                    runByName = userDict[t.RunById].FullName;
+                }
+
+                return new TestOrderDto
+                {
+                    TestOrderId = t.TestOrderId,
+                    PatientId = t.PatientId,
+                    FullName = patient.PatientName,
+                    Age = age,
+                    DateOfBirth = patient.DateOfBirth,
+                    Phone = patient.PhoneNumber,
+                    Gender = patient.Gender,
+                    Status = t.Status.ToString(),
+                    CreateAt = t.CreateAt,
+                    CreateById = t.CreateById,
+                    CreateByName = createByName,
+                    RunAt = t.RunAt,
+                    RunById = t.RunById,
+                    RunByName = runByName
+                };
+            }).ToList();
+
+            return result;
+        }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using TestOrderService.Application.Interfaces.Events;
 using TestOrderService.Domain.Entities;
-namespace TestOrderService.Application.IntegrationEvents.TestResultIntegrationEvents
+namespace TestOrderService.Application.IntegrationEvents.IntegrationEventTestResults
 {
     public class TestResultsSyncUpUpdatedFromMonitoringServiceIntegrationEvent : IntegrationEvent
     {

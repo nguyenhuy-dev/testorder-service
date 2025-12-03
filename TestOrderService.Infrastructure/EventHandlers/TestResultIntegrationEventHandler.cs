@@ -1,7 +1,6 @@
 ﻿using Mapster;
 using Microsoft.Extensions.Logging;
-using TestOrderService.Application.IntegrationEvents.TestResultIntegrationEvents;
-using TestOrderService.Application.IntegrationEvents.TestResults;
+using TestOrderService.Application.IntegrationEvents.IntegrationEventTestResults;
 using TestOrderService.Application.Interfaces;
 using TestOrderService.Application.Interfaces.Message;
 using TestOrderService.Domain.Entities;

@@ -1,5 +1,4 @@
 using TestOrderService.Domain.Entities;
-
 namespace TestOrderService.Application.DTOs
 {
     /// <summary>

@@ -1,6 +1,6 @@
 ﻿using TestOrderService.Application.Interfaces.Events;
 using TestOrderService.Domain.Entities;
-namespace TestOrderService.Application.IntegrationEvents.TestResults
+namespace TestOrderService.Application.IntegrationEvents.IntegrationEventTestResults
 {
     public class TestResultsCreatedIntegrationEvent : IntegrationEvent
     {

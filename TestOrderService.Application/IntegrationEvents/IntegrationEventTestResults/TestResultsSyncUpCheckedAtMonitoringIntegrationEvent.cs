@@ -1,5 +1,5 @@
 ﻿using TestOrderService.Application.Interfaces.Events;
-namespace TestOrderService.Application.IntegrationEvents.TestResultIntegrationEvents
+namespace TestOrderService.Application.IntegrationEvents.IntegrationEventTestResults
 {
     public class TestResultsSyncUpCheckedAtMonitoringIntegrationEvent : IntegrationEvent
     {
