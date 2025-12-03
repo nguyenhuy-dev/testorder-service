@@ -132,8 +132,6 @@ if (!string.IsNullOrEmpty(eventConsumingTopics))
         }
     );
 }
-else
-    throw new InvalidOperationException("'EVENT_CONSUMING_TOPICS' cant be null.");
 
 builder.Services.AddAuthentication("JwtBearer")
     .AddScheme<LabAuthenticationSchemeOptions, LabAuthenticationHandler>("JwtBearer", configureOptions =>
