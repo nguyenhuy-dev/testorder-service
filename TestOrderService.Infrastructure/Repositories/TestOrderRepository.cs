@@ -182,7 +182,7 @@ namespace TestOrderService.Infrastructure.Repositories
         {
             return await _dbContext.TestOrders
                 .Include(t => t.TestResults)
-                .Where(t => t.Status == StatusTestOrder.Completed && !t.TestResults.Any())
+                .Where(t => t.Status != StatusTestOrder.Pending && !t.TestResults.Any())
                 .ToListAsync(cancellationToken);
         }
 
