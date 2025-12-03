@@ -40,6 +40,12 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOr
             if (request.RunAt.HasValue)
                 testOrder.RunAt = request.RunAt;
 
+            if (request.ReviewId.HasValue)
+                testOrder.ReviewId = request.ReviewId;
+
+            if (request.ReviewAt.HasValue)
+                testOrder.ReviewAt = request.ReviewAt;
+
             if (request.TestOrderDescription != null)
             {
                 testOrder.TestOrderDescription =
@@ -49,7 +55,18 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOr
             }
 
             if (request.Status.HasValue)
+            {
                 testOrder.Status = request.Status.Value;
+                // If marking as Completed or Reviewed, ensure Review fields are set
+                if (testOrder.Status == StatusTestOrder.Completed || testOrder.Status == StatusTestOrder.Reviewed)
+                {
+                    if (!testOrder.ReviewId.HasValue)
+                        testOrder.ReviewId = request.ReviewId ?? request.UpdateById;
+                    
+                    if (!testOrder.ReviewAt.HasValue)
+                        testOrder.ReviewAt = request.ReviewAt ?? DateTime.UtcNow;
+                }
+            }
 
             if (request.AIReviewSummary != null)
             {

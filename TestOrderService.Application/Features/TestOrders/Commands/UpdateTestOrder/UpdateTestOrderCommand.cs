@@ -34,6 +34,22 @@ namespace TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOr
         public DateTime? RunAt { get; set; }
 
         /// <summary>
+        ///     Gets or sets the review identifier.
+        /// </summary>
+        /// <value>
+        ///     The review identifier.
+        /// </value>
+        public Guid? ReviewId { get; set; }
+
+        /// <summary>
+        ///     Gets or sets the review at.
+        /// </summary>
+        /// <value>
+        ///     The review at.
+        /// </value>
+        public DateTime? ReviewAt { get; set; }
+
+        /// <summary>
         ///     Gets or sets the test order patient description.
         /// </summary>
         /// <value>
