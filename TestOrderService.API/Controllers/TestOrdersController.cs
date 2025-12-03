@@ -11,6 +11,7 @@ using TestOrderService.Application.Features.TestOrders.Commands.DeleteTestOrder;
 using TestOrderService.Application.Features.TestOrders.Commands.UpdateTestOrder;
 using TestOrderService.Application.Features.TestOrders.Queries.GetDetail;
 using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrders;
+using TestOrderService.Application.Features.TestOrders.Queries.GetTestOrdersByPatient;
 using TestOrderService.Domain.Entities;
 namespace TestOrderService.API.Controllers
 {
@@ -161,6 +162,47 @@ namespace TestOrderService.API.Controllers
             var result = await _sender.Send(query, ct);
 
             return Ok(ApiResponse<TestOrderDetailDto>.Success(result));
+        }
+
+        /// <summary>
+        ///     Gets all test orders for a specific patient by userId or patientId
+        /// </summary>
+        /// <param name="id">The user identifier or patient identifier</param>
+        /// <param name="ct">The cancellation token</param>
+        /// <returns>List of test orders for the patient</returns>
+        [HttpGet("patient/{id:guid}")]
+        [Authorize] // Any authenticated user can call this
+        [ProducesResponseType(typeof(ApiResponse<List<TestOrderDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetTestOrdersByPatient(Guid id, CancellationToken ct)
+        {
+            // Security: Patient can only view their own test orders
+            // Admin and Lab Users can view any patient's test orders
+            var currentUserId = CurrentUserId;
+            var isAdmin = User.IsInRole("Admin");
+            var isLabUser = User.IsInRole("Lab User");
+
+            if (!isAdmin && !isLabUser && currentUserId != id)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new ErrorResponse
+                {
+                    StatusCode = 403,
+                    Message = "You do not have permission to view these test orders."
+                });
+            }
+
+            // Try to get test orders - the repository will handle userId -> patientId mapping
+            var query = new GetTestOrdersByPatientQuery(id);
+            var result = await _sender.Send(query, ct);
+
+            return Ok(new ApiResponse<List<TestOrderDto>>
+            {
+                StatusCode = 200,
+                Message = "Get test orders successfully.",
+                Data = result
+            });
         }
     }
 }

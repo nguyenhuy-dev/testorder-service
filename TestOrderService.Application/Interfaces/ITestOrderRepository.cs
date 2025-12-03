@@ -49,5 +49,13 @@ namespace TestOrderService.Application.Interfaces
         Task<IEnumerable<TestOrder>> GetTestOrdersCompletedButMissingTestResults(CancellationToken cancellationToken);
 
         Task<TestOrder?> GetTestOrderByIdWithTrackingAsync(Guid testOrderId, CancellationToken cancellationToken);
+
+        /// <summary>
+        ///     Gets all test orders for a specific patient
+        /// </summary>
+        /// <param name="patientId">The patient identifier</param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns>List of test orders for the patient</returns>
+        Task<List<TestOrderDto>> GetTestOrdersByPatientIdAsync(Guid patientId, CancellationToken cancellationToken);
     }
 }
