@@ -159,9 +159,9 @@ app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 app.UseCors("AllowFrontend");
 
-app.UseAuthentication();
-app.UseMiddleware<AuthenticationGateMiddleware>();
-app.UseAuthorization();
+//app.UseAuthentication();
+//app.UseMiddleware<AuthenticationGateMiddleware>();
+//app.UseAuthorization();
 
 
 app.MapControllers();
